@@ -18,10 +18,10 @@ namespace BloodDonationSystem.Models
         public BloodRequest BloodRequest { get; set; } = null!;
 
         [Required]
-        public int ScannedByUserId { get; set; }
+        public string ScannedByUserId { get; set; }
 
         [ForeignKey(nameof(ScannedByUserId))]
-        public User ScannedByUser { get; set; } = null!;
+        public ApplicationUser ScannedByUser { get; set; } = null!;
 
         public DateTime ScanTime { get; set; } = DateTime.UtcNow;
     }

@@ -47,10 +47,10 @@ namespace BloodDonationSystem.Models
         public BloodRequest? BloodRequest { get; set; }
 
         // Nullable FK: optional admin who made the change
-        public int? ChangedByAdminId { get; set; }
+        public string? ChangedByAdminId { get; set; }
 
         [ForeignKey(nameof(ChangedByAdminId))]
-        public User? ChangedByAdmin { get; set; }
+        public ApplicationUser? ChangedByAdmin { get; set; }
 
         public string? Notes { get; set; }
 

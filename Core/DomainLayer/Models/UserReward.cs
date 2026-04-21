@@ -12,10 +12,10 @@ namespace BloodDonationSystem.Models
         public int Id { get; set; }
 
         [Required]
-        public int UserId { get; set; }
+        public string UserId { get; set; }
 
         [ForeignKey(nameof(UserId))]
-        public User User { get; set; } = null!;
+        public ApplicationUser User { get; set; } = null!;
 
         [Required]
         public int RewardId { get; set; }

@@ -38,10 +38,10 @@ namespace BloodDonationSystem.Models
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         // Nullable FK: the admin who last updated this record
-        public int? UpdatedByAdminId { get; set; }
+        public string? UpdatedByAdminId { get; set; }
 
         [ForeignKey(nameof(UpdatedByAdminId))]
-        public User? UpdatedByAdmin { get; set; }
+        public ApplicationUser? UpdatedByAdmin { get; set; }
 
         [Required]
         [MaxLength(20)]

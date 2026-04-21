@@ -21,7 +21,7 @@ namespace BloodDonationSystem.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties
-        public ICollection<User> HospitalAdmins { get; set; } = new List<User>();
+        public ICollection<ApplicationUser> HospitalAdmins { get; set; } = new List<ApplicationUser>();
         public ICollection<BloodRequest> BloodRequests { get; set; } = new List<BloodRequest>();
         public ICollection<Donation> Donations { get; set; } = new List<Donation>();
         public ICollection<HospitalInventory> HospitalInventories { get; set; } = new List<HospitalInventory>();

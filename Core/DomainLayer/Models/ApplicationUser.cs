@@ -1,34 +1,27 @@
+using BloodDonationSystem.Enums;
+using DomainLayer.Models;
+using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using BloodDonationSystem.Enums;
 
 namespace BloodDonationSystem.Models
 {
-    public class User
+    public class ApplicationUser : IdentityUser
     {
-        [Key]
-        public int Id { get; set; }
+  
 
         [Required]
         [MaxLength(100)]
         public string FullName { get; set; } = string.Empty;
 
-        [Required]
-        [MaxLength(150)]
-        [EmailAddress]
-        public string Email { get; set; } = string.Empty;
-
-        [Required]
-        public string PasswordHash { get; set; } = string.Empty;
-
-        [MaxLength(20)]
-        [Phone]
-        public string? PhoneNumber { get; set; }
+  
 
         public BloodType BloodType { get; set; }
 
 
         public Gender Gender { get; set; }
+
+        public int Age { get; set; }
 
         public string NationalId { get; set; } = string.Empty;
 
@@ -48,7 +41,8 @@ namespace BloodDonationSystem.Models
         [ForeignKey(nameof(HospitalId))]
         public Hospital? Hospital { get; set; }
 
-        // ─── Navigation properties ──────────────────────────────────────────────
+        // ── Navigation properties ─────────────────────────────────────────────
+        public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
         public ICollection<BloodRequest> BloodRequests { get; set; } = new List<BloodRequest>();
         public ICollection<Donation> Donations { get; set; } = new List<Donation>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
