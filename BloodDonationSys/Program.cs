@@ -1,16 +1,19 @@
-
 using BloodDonationSystem.Data;
 using BloodDonationSystem.Models;
+using DomainLayer.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Persistence.Data;
+using Persistence.UnitOfWork;
 using Presentation;
 using Service;
 using ServiceAbstraction.Interfaces;
+using ServiceAbstraction.Mapping;
 using System.Text;
+using AutoMapper;
 
 namespace BloodDonationSystem;
 
@@ -71,6 +74,13 @@ public class Program
         // ── Application Services ──────────────────────────────────────────────
         builder.Services.AddScoped<IJwtService, JwtService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<IBloodRequestService, BloodRequestService>();
+        builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+        builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // AutoMapper
+        builder.Services.AddAutoMapper(typeof(BloodRequestProfile).Assembly);
+
 
 
 
