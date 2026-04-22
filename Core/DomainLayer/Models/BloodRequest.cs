@@ -15,11 +15,18 @@ namespace BloodDonationSystem.Models
         [ForeignKey(nameof(RequestedByUserId))]
         public ApplicationUser RequestedByUser { get; set; } = null!;
 
-        [Required]
-        public int HospitalId { get; set; }
+        
+        public int? HospitalId { get; set; }
 
         [ForeignKey(nameof(HospitalId))]
-        public Hospital Hospital { get; set; } = null!;
+        public Hospital? Hospital { get; set; } 
+
+        [Required]
+        [MaxLength(200)]
+        public string HospitalName { get; set; } = string.Empty;
+
+        [MaxLength(300)]
+        public string HospitalAddress { get; set; } = string.Empty;
 
         public BloodType BloodType { get; set; }
 

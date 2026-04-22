@@ -146,8 +146,18 @@ namespace Persistence.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("HospitalId")
+                    b.Property<string>("HospitalAddress")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int?>("HospitalId")
                         .HasColumnType("int");
+
+                    b.Property<string>("HospitalName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<bool>("IsBloodReceived")
                         .ValueGeneratedOnAdd()
@@ -751,8 +761,7 @@ namespace Persistence.Data.Migrations
                     b.HasOne("BloodDonationSystem.Models.Hospital", "Hospital")
                         .WithMany("BloodRequests")
                         .HasForeignKey("HospitalId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("BloodDonationSystem.Models.ApplicationUser", "RequestedByUser")
                         .WithMany("BloodRequests")

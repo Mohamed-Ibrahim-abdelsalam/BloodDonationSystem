@@ -29,6 +29,9 @@ namespace BloodDonationSystem.Data
         {
             base.OnModelCreating(modelBuilder);
 
+
+            // ApplicationUser configuration///////
+
             modelBuilder.Entity<ApplicationUser>(entity =>
             {
                 entity.HasIndex(u => u.NationalId).IsUnique();
@@ -43,6 +46,8 @@ namespace BloodDonationSystem.Data
                       .OnDelete(DeleteBehavior.SetNull);
             });
 
+            // RefreshToken configuration//////////
+
             modelBuilder.Entity<RefreshToken>(entity =>
             {
                 entity.HasIndex(r => r.Token).IsUnique();
@@ -52,10 +57,14 @@ namespace BloodDonationSystem.Data
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
+            // Index on Hospital Name for faster search////////////
+
             modelBuilder.Entity<Hospital>(entity =>
             {
                 entity.HasIndex(h => h.Name);
             });
+
+            // BloodRequest configuration/////////////////
 
             modelBuilder.Entity<BloodRequest>(entity =>
             {
@@ -69,11 +78,17 @@ namespace BloodDonationSystem.Data
                       .HasForeignKey(br => br.RequestedByUserId)
                       .OnDelete(DeleteBehavior.Restrict);
 
+
                 entity.HasOne(br => br.Hospital)
-                      .WithMany(h => h.BloodRequests)
-                      .HasForeignKey(br => br.HospitalId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                     .WithMany(h => h.BloodRequests)
+                     .HasForeignKey(br => br.HospitalId)
+                     .IsRequired(false)
+                     .OnDelete(DeleteBehavior.SetNull);
+
             });
+
+
+            // Donation configuration/////////////////
 
             modelBuilder.Entity<Donation>(entity =>
             {
@@ -96,6 +111,9 @@ namespace BloodDonationSystem.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
+
+            // DonationScan configuration/////////////////
+
             modelBuilder.Entity<DonationScan>(entity =>
             {
                 entity.HasIndex(s => s.DonationId).IsUnique();
@@ -109,6 +127,9 @@ namespace BloodDonationSystem.Data
                       .HasForeignKey(s => s.ScannedByHospitalAdminId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
+
+
+            // PickupScan configuration/////////////////
 
             modelBuilder.Entity<PickupScan>(entity =>
             {
@@ -124,12 +145,20 @@ namespace BloodDonationSystem.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
+
+
+            // QrToken configuration/////////////////
+
             modelBuilder.Entity<QrToken>(entity =>
             {
                 entity.HasIndex(q => q.Token).IsUnique();
                 entity.Property(q => q.Type).HasConversion<string>();
                 entity.Property(q => q.IsUsed).HasDefaultValue(false);
             });
+
+
+
+            // Notification configuration/////////////////
 
             modelBuilder.Entity<Notification>(entity =>
             {
@@ -139,6 +168,10 @@ namespace BloodDonationSystem.Data
                       .HasForeignKey(n => n.UserId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
+
+
+
+            // Reward configuration/////////////////
 
             modelBuilder.Entity<UserReward>(entity =>
             {
@@ -153,6 +186,10 @@ namespace BloodDonationSystem.Data
                       .HasForeignKey(ur => ur.RewardId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
+
+
+
+            // HospitalInventory configuration/////////////////
 
             modelBuilder.Entity<HospitalInventory>(entity =>
             {
@@ -170,6 +207,12 @@ namespace BloodDonationSystem.Data
                       .IsRequired(false)
                       .OnDelete(DeleteBehavior.SetNull);
             });
+
+
+
+
+            // InventoryLog configuration/////////////////
+
 
             modelBuilder.Entity<InventoryLog>(entity =>
             {
