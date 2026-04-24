@@ -92,23 +92,31 @@ namespace BloodDonationSystem.Data
 
             modelBuilder.Entity<Donation>(entity =>
             {
+               
                 entity.Property(d => d.Status).HasConversion<string>();
                 entity.Property(d => d.BloodType).HasConversion<string>();
+                entity.Property(d => d.HasTattoo).HasDefaultValue(false);
+                entity.Property(d => d.MedicalCondition).HasDefaultValue(string.Empty);
 
                 entity.HasOne(d => d.DonorUser)
                       .WithMany(u => u.Donations)
                       .HasForeignKey(d => d.DonorUserId)
                       .OnDelete(DeleteBehavior.Restrict);
 
+                // Nullable — general donations have no request
                 entity.HasOne(d => d.BloodRequest)
                       .WithMany(br => br.Donations)
                       .HasForeignKey(d => d.BloodRequestId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                      .IsRequired(false)
+                      .OnDelete(DeleteBehavior.SetNull);
 
+                // Nullable — general donations have no hospital
                 entity.HasOne(d => d.Hospital)
                       .WithMany(h => h.Donations)
                       .HasForeignKey(d => d.HospitalId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                      .IsRequired(false)
+                      .OnDelete(DeleteBehavior.SetNull);
+
             });
 
 

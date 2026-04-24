@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Persistence.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260422232302_InitialCreate")]
+    [Migration("20260424231903_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -202,7 +202,15 @@ namespace Persistence.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("BloodRequestId")
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("Age")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("BloodRequestId")
                         .HasColumnType("int");
 
                     b.Property<string>("BloodType")
@@ -219,13 +227,23 @@ namespace Persistence.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("HospitalId")
+                    b.Property<bool>("HasTattoo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int?>("HospitalId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastDonationDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("MedicalCondition")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasDefaultValue("");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -233,16 +251,6 @@ namespace Persistence.Data.Migrations
 
                     b.Property<double>("Weight")
                         .HasColumnType("float");
-
-                    b.Property<int>("age")
-                        .HasColumnType("int");
-
-                    b.Property<string>("havetattoos")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("lastDonation")
-                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -782,8 +790,7 @@ namespace Persistence.Data.Migrations
                     b.HasOne("BloodDonationSystem.Models.BloodRequest", "BloodRequest")
                         .WithMany("Donations")
                         .HasForeignKey("BloodRequestId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("BloodDonationSystem.Models.ApplicationUser", "DonorUser")
                         .WithMany("Donations")
@@ -794,8 +801,7 @@ namespace Persistence.Data.Migrations
                     b.HasOne("BloodDonationSystem.Models.Hospital", "Hospital")
                         .WithMany("Donations")
                         .HasForeignKey("HospitalId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("BloodRequest");
 

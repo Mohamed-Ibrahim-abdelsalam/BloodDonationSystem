@@ -349,17 +349,18 @@ namespace Persistence.Data.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     DonorUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    BloodRequestId = table.Column<int>(type: "int", nullable: false),
-                    HospitalId = table.Column<int>(type: "int", nullable: false),
+                    BloodRequestId = table.Column<int>(type: "int", nullable: true),
+                    HospitalId = table.Column<int>(type: "int", nullable: true),
                     BloodType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Age = table.Column<int>(type: "int", nullable: false),
                     Weight = table.Column<double>(type: "float", nullable: false),
-                    age = table.Column<int>(type: "int", nullable: false),
-                    havetattoos = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    HasTattoo = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    LastDonationDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Address = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    MedicalCondition = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false, defaultValue: ""),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    MedicalCondition = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    lastDonation = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ConfirmedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ConfirmedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -375,13 +376,13 @@ namespace Persistence.Data.Migrations
                         column: x => x.BloodRequestId,
                         principalTable: "BloodRequests",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_Donations_Hospitals_HospitalId",
                         column: x => x.HospitalId,
                         principalTable: "Hospitals",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(

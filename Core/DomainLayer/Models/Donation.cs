@@ -9,48 +9,53 @@ namespace BloodDonationSystem.Models
         [Key]
         public int Id { get; set; }
 
+        // ── Who is donating ───────────────────────────────────────────────────
         [Required]
-        public string DonorUserId { get; set; }
+        public string DonorUserId { get; set; } = string.Empty;
 
         [ForeignKey(nameof(DonorUserId))]
         public ApplicationUser DonorUser { get; set; } = null!;
 
-        [Required]
-        public int BloodRequestId { get; set; }
+        // ── Linked to a request (nullable = general donation) ─────────────────
+        public int? BloodRequestId { get; set; }
 
         [ForeignKey(nameof(BloodRequestId))]
-        public BloodRequest BloodRequest { get; set; } = null!;
+        public BloodRequest? BloodRequest { get; set; }
 
-        [Required]
-        public int HospitalId { get; set; }
+        // ── Hospital (nullable = no request linked) ───────────────────────────
+        public int? HospitalId { get; set; }
 
         [ForeignKey(nameof(HospitalId))]
-        public Hospital Hospital { get; set; } = null!;
+        public Hospital? Hospital { get; set; }
 
+        // ── Blood info ────────────────────────────────────────────────────────
         public BloodType BloodType { get; set; }
 
-         [Required]
-        [Range(30, 200, ErrorMessage = "Weight must be between 30 and 200 kg.")]
+        [Range(1, 120)]
+        public int Age { get; set; }
+
+        [Range(50, 300, ErrorMessage = "Weight must be at least 50 kg.")]
         public double Weight { get; set; }
 
-        [Required]
-        public int age { get; set; }
+        public bool HasTattoo { get; set; } = false;
+
+        public DateTime? LastDonationDate { get; set; }
 
         [Required]
-        public string havetattoos { get; set; }
+        [MaxLength(300)]
+        public string Address { get; set; } = string.Empty;
 
-        public DonationStatus Status { get; set; } = DonationStatus.Pending;
-
-         [MaxLength(200)]
+        [MaxLength(500)]
         public string MedicalCondition { get; set; } = string.Empty;
 
-        public DateTime lastDonation { get; set; }
-
-        public DateTime? ConfirmedAt { get; set; }
+        // ── Status & timestamps ───────────────────────────────────────────────
+        public DonationStatus Status { get; set; } = DonationStatus.Pending;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // ─── Navigation properties (one-to-one) ────────────────────────────────
+        public DateTime? ConfirmedAt { get; set; }
+
+        // ── Navigation ────────────────────────────────────────────────────────
         public DonationScan? DonationScan { get; set; }
         public ICollection<InventoryLog> InventoryLogs { get; set; } = new List<InventoryLog>();
     }

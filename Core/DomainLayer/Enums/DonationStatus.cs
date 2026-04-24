@@ -3,7 +3,8 @@ namespace BloodDonationSystem.Enums
     public enum DonationStatus
     {
         Pending,
+        Confirmed,
         Rejected,
-        Confirmed
+        Cancelled
     }
 }

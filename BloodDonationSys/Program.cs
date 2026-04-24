@@ -76,6 +76,7 @@ public class Program
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IBloodRequestService, BloodRequestService>();
         builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+        builder.Services.AddScoped<IDonationService, DonationService>();
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // AutoMapper
