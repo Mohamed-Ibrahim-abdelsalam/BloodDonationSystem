@@ -183,7 +183,10 @@ namespace BloodDonationSystem.Data
 
             modelBuilder.Entity<UserReward>(entity =>
             {
-                entity.HasIndex(ur => new { ur.UserId, ur.RewardId }).IsUnique();
+
+                // No unique constraint — user can redeem same reward multiple times
+                entity.Property(ur => ur.Status).HasConversion<string>();
+
                 entity.HasOne(ur => ur.User)
                       .WithMany(u => u.UserRewards)
                       .HasForeignKey(ur => ur.UserId)
@@ -193,6 +196,7 @@ namespace BloodDonationSystem.Data
                       .WithMany(r => r.UserRewards)
                       .HasForeignKey(ur => ur.RewardId)
                       .OnDelete(DeleteBehavior.Cascade);
+
             });
 
 

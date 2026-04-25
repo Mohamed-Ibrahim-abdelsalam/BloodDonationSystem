@@ -77,6 +77,8 @@ public class Program
         builder.Services.AddScoped<IBloodRequestService, BloodRequestService>();
         builder.Services.AddScoped<IUserProfileService, UserProfileService>();
         builder.Services.AddScoped<IDonationService, DonationService>();
+        builder.Services.AddScoped<INotificationService, NotificationService>();
+        builder.Services.AddScoped<IRewardService, RewardService>();
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // AutoMapper
@@ -127,6 +129,7 @@ public class Program
         using (var scope = app.Services.CreateScope())
         {
             await AuthDbContextSeed.SeedAsync(scope.ServiceProvider);
+            await RewardDbSeed.SeedAsync(scope.ServiceProvider);
         }
 
 

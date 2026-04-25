@@ -17,6 +17,9 @@ namespace Persistence.UnitOfWork
         private IGenericRepository<BloodRequest>? _bloodRequests;
         private IGenericRepository<ApplicationUser>? _users;
         private IGenericRepository<Donation>? _donations;
+        private IGenericRepository<Notification>? _notifications;
+        private IGenericRepository<Reward>? _rewards;
+        private IGenericRepository<UserReward>? _userRewards;
 
         public UnitOfWork(ApplicationDbContext ctx)
         {
@@ -31,6 +34,15 @@ namespace Persistence.UnitOfWork
 
         public IGenericRepository<Donation> Donations
             => _donations ??= new GenericRepository<Donation>(_ctx);
+
+        public IGenericRepository<Notification> Notifications
+            => _notifications ??= new GenericRepository<Notification>(_ctx);
+
+        public IGenericRepository<Reward> Rewards
+            => _rewards ??= new GenericRepository<Reward>(_ctx);
+
+        public IGenericRepository<UserReward> UserRewards
+            => _userRewards ??= new GenericRepository<UserReward>(_ctx);
 
         public async Task<int> SaveChangesAsync()
             => await _ctx.SaveChangesAsync();

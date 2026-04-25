@@ -12,6 +12,9 @@ namespace DomainLayer.Interfaces
         IGenericRepository<BloodRequest> BloodRequests { get; }
         IGenericRepository<ApplicationUser> Users { get; }
         IGenericRepository<Donation> Donations { get; }
+        IGenericRepository<Notification> Notifications { get; }
+        IGenericRepository<Reward> Rewards { get; }
+        IGenericRepository<UserReward> UserRewards { get; }
 
         Task<int> SaveChangesAsync();
     }

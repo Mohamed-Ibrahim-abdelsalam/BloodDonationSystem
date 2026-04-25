@@ -1,3 +1,4 @@
+using DomainLayer.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -12,7 +13,7 @@ namespace BloodDonationSystem.Models
         public int Id { get; set; }
 
         [Required]
-        public string UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
 
         [ForeignKey(nameof(UserId))]
         public ApplicationUser User { get; set; } = null!;
@@ -23,6 +24,11 @@ namespace BloodDonationSystem.Models
         [ForeignKey(nameof(RewardId))]
         public Reward Reward { get; set; } = null!;
 
+        public int PointsUsed { get; set; }
+
+        public UserRewardStatus Status { get; set; } = UserRewardStatus.Unused;
+
         public DateTime RedeemedAt { get; set; } = DateTime.UtcNow;
+
     }
 }

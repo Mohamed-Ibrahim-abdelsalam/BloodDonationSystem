@@ -543,15 +543,19 @@ namespace Persistence.Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("Name")
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PointsRequired")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
-
-                    b.Property<int>("RequiredPoints")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -566,11 +570,18 @@ namespace Persistence.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("PointsUsed")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("RedeemedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("RewardId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -580,8 +591,7 @@ namespace Persistence.Data.Migrations
 
                     b.HasIndex("RewardId");
 
-                    b.HasIndex("UserId", "RewardId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
                     b.ToTable("UserRewards");
                 });
