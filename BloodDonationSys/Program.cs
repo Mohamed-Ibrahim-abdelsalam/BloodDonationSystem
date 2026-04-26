@@ -79,6 +79,7 @@ public class Program
         builder.Services.AddScoped<IDonationService, DonationService>();
         builder.Services.AddScoped<INotificationService, NotificationService>();
         builder.Services.AddScoped<IRewardService, RewardService>();
+        builder.Services.AddScoped<IQrService, QrService>();
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // AutoMapper

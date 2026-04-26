@@ -15,6 +15,7 @@ namespace DomainLayer.Interfaces
         IGenericRepository<Notification> Notifications { get; }
         IGenericRepository<Reward> Rewards { get; }
         IGenericRepository<UserReward> UserRewards { get; }
+        IGenericRepository<QrToken> QrTokens { get; }
 
         Task<int> SaveChangesAsync();
     }
