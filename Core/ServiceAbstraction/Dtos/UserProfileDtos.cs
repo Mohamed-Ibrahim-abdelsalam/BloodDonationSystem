@@ -58,4 +58,14 @@ namespace ServiceAbstraction.Dtos
         [MaxLength(300)]
         public string Address { get; set; } = string.Empty;
     }
+
+
+
+    public class UserDashboardDto
+    {
+        public string FullName { get; set; } = string.Empty;
+        public int TotalDonations { get; set; }
+        public int TotalPoints { get; set; }
+    }
+
 }

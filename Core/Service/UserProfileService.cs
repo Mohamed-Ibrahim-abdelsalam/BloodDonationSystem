@@ -1,5 +1,8 @@
 ﻿using AutoMapper;
+using BloodDonationSystem.Enums;
 using BloodDonationSystem.Models;
+using DomainLayer.Interfaces;
+using DomainLayer.Specifications;
 using Microsoft.AspNetCore.Identity;
 using ServiceAbstraction.Dtos;
 using ServiceAbstraction.Interfaces;
@@ -15,11 +18,13 @@ namespace Service
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMapper _mapper;
+        private readonly IUnitOfWork _uow;
 
-        public UserProfileService(UserManager<ApplicationUser> userManager, IMapper mapper)
+        public UserProfileService( UserManager<ApplicationUser> userManager,IMapper mapper, IUnitOfWork uow)
         {
             _userManager = userManager;
             _mapper = mapper;
+            _uow = uow;
         }
 
         // ── GET /api/users/profile ────────────────────────────────────────────
@@ -30,6 +35,28 @@ namespace Service
 
             return _mapper.Map<UserProfileDto>(user);
         }
+
+
+         // ── GET /api/users/dashboard ─────────────────────────────────────────
+        public async Task<UserDashboardDto> GetDashboardAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId)
+                ?? throw new KeyNotFoundException("User not found.");
+
+            // Count only Confirmed donations
+            var donationsSpec = new DonationsByUserSpecification(userId);
+            var donations     = await _uow.Donations.GetAllWithSpecAsync(donationsSpec);
+            var totalDonations = donations.Count(d => d.Status == DonationStatus.Confirmed);
+
+            return new UserDashboardDto
+            {
+                FullName       = user.FullName,
+                TotalDonations = totalDonations,
+                TotalPoints    = user.Points,
+            };
+        }
+    
+
 
         // ── PUT /api/users/profile ────────────────────────────────────────────
         public async Task<UpdateProfileResponseDto> UpdateProfileAsync(

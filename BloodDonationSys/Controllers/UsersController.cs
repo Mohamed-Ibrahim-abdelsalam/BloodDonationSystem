@@ -34,6 +34,23 @@ namespace BloodDonationSystem.Controllers
             }
         }
 
+
+        // ── GET /api/users/dashboard ─────────────────────────────────────────
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboard()
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+                var result = await _service.GetDashboardAsync(userId);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         // ── PUT /api/users/profile ────────────────────────────────────────────
         [HttpPut("profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)

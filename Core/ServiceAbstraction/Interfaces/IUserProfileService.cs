@@ -11,5 +11,6 @@ namespace ServiceAbstraction.Interfaces
     {
         Task<UserProfileDto> GetProfileAsync(string userId);
         Task<UpdateProfileResponseDto> UpdateProfileAsync(string userId, UpdateProfileDto dto);
+        Task<UserDashboardDto> GetDashboardAsync(string userId);
     }
 }
