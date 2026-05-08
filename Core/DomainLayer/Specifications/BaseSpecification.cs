@@ -18,6 +18,11 @@ namespace DomainLayer.Specifications
         int? Take { get; }
         int? Skip { get; }
         bool IsPagingEnabled { get; }
+
+        /// <summary>
+        /// When true, EF Core applies AsNoTracking() — default for all read-only queries.
+        /// </summary>
+        bool IsReadOnly { get; }
     }
 
     // ── Base Implementation ───────────────────────────────────────────────────
@@ -31,6 +36,11 @@ namespace DomainLayer.Specifications
         public int? Take { get; private set; }
         public int? Skip { get; private set; }
         public bool IsPagingEnabled { get; private set; }
+
+        /// <summary>
+        /// Defaults to true — all reads are AsNoTracking unless explicitly overridden.
+        /// </summary>
+        public bool IsReadOnly { get; private set; } = true;
 
         protected void AddInclude(Expression<Func<T, object>> includeExpression)
             => Includes.Add(includeExpression);
@@ -50,5 +60,11 @@ namespace DomainLayer.Specifications
             Take = take;
             IsPagingEnabled = true;
         }
+
+        /// <summary>
+        /// Call this in write-path specs (GetById before Update/Delete)
+        /// so EF Core tracks the entity and can persist changes.
+        /// </summary>
+        protected void DisableReadOnly() => IsReadOnly = false;
     }
 }

@@ -34,7 +34,16 @@ namespace Persistence.Repositories
                 .ToListAsync();
 
         public async Task<IEnumerable<T>> GetAllAsync()
-            => await _ctx.Set<T>().ToListAsync();
+            => await _ctx.Set<T>().AsNoTracking().ToListAsync();
+
+        /// <summary>
+        /// Executes COUNT(*) with only the Criteria from the spec applied —
+        /// no joins, no ordering, no Skip/Take. Single round-trip to the DB.
+        /// </summary>
+        public async Task<int> CountAsync(ISpecification<T> spec)
+            => await SpecificationEvaluator<T>
+                .GetCountQuery(_ctx.Set<T>().AsQueryable(), spec)
+                .CountAsync();
 
         public async Task AddAsync(T entity)
             => await _ctx.Set<T>().AddAsync(entity);

@@ -80,6 +80,7 @@ public class Program
         builder.Services.AddScoped<INotificationService, NotificationService>();
         builder.Services.AddScoped<IRewardService, RewardService>();
         builder.Services.AddScoped<IQrService, QrService>();
+        builder.Services.AddScoped<IAdminService, AdminService>();
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // AutoMapper
@@ -135,11 +136,10 @@ public class Program
 
 
         // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
+        
             app.UseSwagger();
             app.UseSwaggerUI();
-        }
+        
 
         app.UseHttpsRedirection();
         app.UseAuthentication();

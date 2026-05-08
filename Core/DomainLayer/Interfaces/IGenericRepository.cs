@@ -13,6 +13,13 @@ namespace DomainLayer.Interfaces
         Task<T?> GetEntityWithSpecAsync(ISpecification<T> spec);
         Task<IEnumerable<T>> GetAllWithSpecAsync(ISpecification<T> spec);
         Task<IEnumerable<T>> GetAllAsync();
+
+        /// <summary>
+        /// Returns the count of entities matching the spec's Criteria only —
+        /// no includes, no ordering, no paging. Used for pagination metadata.
+        /// </summary>
+        Task<int> CountAsync(ISpecification<T> spec);
+
         Task AddAsync(T entity);
         void Update(T entity);
         void Delete(T entity);
