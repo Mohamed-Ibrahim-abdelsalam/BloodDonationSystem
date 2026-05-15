@@ -19,6 +19,12 @@ namespace BloodDonationSystem.Controllers
         }
 
         // ── POST /api/donations ───────────────────────────────────────────────
+        /// <summary>
+        /// Create a donation (request-based or general).
+        /// BloodType is automatically taken from the authenticated user's profile.
+        /// bloodRequestId is optional — omit for general donations.
+        /// hospitalId is required.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateDonationDto dto)
         {
@@ -31,10 +37,6 @@ namespace BloodDonationSystem.Controllers
                 var result = await _service.CreateAsync(dto, userId);
                 return CreatedAtAction(nameof(GetMy), null, result);
             }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
@@ -46,6 +48,10 @@ namespace BloodDonationSystem.Controllers
         }
 
         // ── GET /api/donations/my ─────────────────────────────────────────────
+        /// <summary>
+        /// Get all donations for the currently authenticated user, newest first.
+        /// Covers both request-based and general donations.
+        /// </summary>
         [HttpGet("my")]
         public async Task<IActionResult> GetMy()
         {
@@ -55,6 +61,9 @@ namespace BloodDonationSystem.Controllers
         }
 
         // ── POST /api/donations/{id}/cancel ───────────────────────────────────
+        /// <summary>
+        /// Cancel a pending donation. Only the donor can cancel their own donation.
+        /// </summary>
         [HttpPost("{id:int}/cancel")]
         public async Task<IActionResult> Cancel(int id)
         {

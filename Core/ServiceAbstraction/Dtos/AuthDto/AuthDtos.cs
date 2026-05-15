@@ -18,7 +18,10 @@ namespace ServiceAbstraction.Dtos.AuthDto
         public string PhoneNumber { get; set; } = string.Empty;
         public int Age { get; set; }
         public Gender Gender { get; set; }
+        public BloodType BloodType { get; set; }
         public string Address { get; set; } = string.Empty;
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
         public string NationalId { get; set; } = string.Empty;
     }
 

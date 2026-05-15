@@ -25,22 +25,27 @@ namespace BloodDonationSystem.Models
         [MaxLength(200)]
         public string HospitalName { get; set; } = string.Empty;
 
+
         [MaxLength(300)]
-        public string HospitalAddress { get; set; } = string.Empty;
+        public string HospitalLocation { get; set; } = string.Empty;
+
+
+        public double? Latitude { get; set; }
+
+        public double? Longitude { get; set; }
 
         public BloodType BloodType { get; set; }
-
 
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1.")]
         public int Quantity { get; set; }
 
-         public RequestPriority Priority { get; set; }
+        public RequestPriority Priority { get; set; }
 
         public BloodRequestStatus Status { get; set; } = BloodRequestStatus.Open;
 
         public bool IsBloodReceived { get; set; } = false;
 
-        public DateTime? neededby { get; set; }
+        public DateTime? NeededBy { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

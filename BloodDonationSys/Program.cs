@@ -81,6 +81,12 @@ public class Program
         builder.Services.AddScoped<IRewardService, RewardService>();
         builder.Services.AddScoped<IQrService, QrService>();
         builder.Services.AddScoped<IAdminService, AdminService>();
+        builder.Services.AddScoped<IAiMatchService, AiMatchService>();
+        builder.Services.AddHttpClient<AiMatchService>(client =>
+         {
+              client.BaseAddress = new Uri("https://blood-matching-ai-production.up.railway.app/");
+              client.Timeout = TimeSpan.FromSeconds(35);
+         });
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // AutoMapper

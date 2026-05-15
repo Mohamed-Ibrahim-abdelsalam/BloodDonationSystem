@@ -13,30 +13,39 @@ namespace ServiceAbstraction.Mapping
     {
         public DonationProfile()
         {
-            // CreateDonationDto → Donation entity
-            CreateMap<CreateDonationDto, Donation>()
-                .ForMember(d => d.Status, o => o.Ignore())
-                .ForMember(d => d.CreatedAt, o => o.Ignore())
-                .ForMember(d => d.DonorUserId, o => o.Ignore());
-
-            // Donation → DonationResponseDto
+            // ── Donation → DonationResponseDto (POST response) ────────────────
             CreateMap<Donation, DonationResponseDto>()
-                .ForMember(d => d.DonorData, o => o.MapFrom(s => new DonorDataDto
-                {
-                    Age = s.Age,
-                    Weight = s.Weight,
-                    HasTattoo = s.HasTattoo,
-                    LastDonationDate = s.LastDonationDate,
-                    Address = s.Address,
-                    MedicalCondition = s.MedicalCondition,
-                }));
+                .ForMember(d => d.BloodType,
+                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "+")))
+                .ForMember(d => d.Status,
+                    o => o.MapFrom(s => s.Status.ToString()))
+                .ForMember(d => d.HospitalId,
+                    o => o.MapFrom(s => s.HospitalId))
+                .ForMember(d => d.HospitalName,
+                    o => o.MapFrom(s => s.Hospital != null ? s.Hospital.Name : string.Empty))
+                .ForMember(d => d.DonorData,
+                    o => o.MapFrom(s => new DonorDataDto
+                    {
+                        Age = s.Age,
+                        Weight = s.Weight,
+                        HasTattoo = s.HasTattoo,
+                        LastDonationDate = s.LastDonationDate,
+                        // Donation.MedicalCondition is stored as string ("True"/"False")
+                        // because the DB column pre-dates the bool DTO.
+                        // Parse it back to bool for the response.
+                        MedicalCondition = s.MedicalCondition == "True",
+                    }));
 
-            // Donation → MyDonationDto
+            // ── Donation → MyDonationDto (GET /my list) ───────────────────────
             CreateMap<Donation, MyDonationDto>()
-                .ForMember(d => d.HospitalName, o => o.MapFrom(s =>
-                    s.BloodRequest != null
-                        ? s.BloodRequest.HospitalName
-                        : null));
+                .ForMember(d => d.BloodType,
+                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "+")))
+                .ForMember(d => d.Status,
+                    o => o.MapFrom(s => s.Status.ToString()))
+                .ForMember(d => d.HospitalId,
+                    o => o.MapFrom(s => s.HospitalId))
+                .ForMember(d => d.HospitalName,
+                    o => o.MapFrom(s => s.Hospital != null ? s.Hospital.Name : string.Empty));
         }
     }
 }

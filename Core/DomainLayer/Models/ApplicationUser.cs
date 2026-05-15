@@ -29,6 +29,10 @@ namespace BloodDonationSystem.Models
         [MaxLength(300)]
         public string Address { get; set; } = string.Empty;
 
+        public double? Latitude { get; set; }
+
+        public double? Longitude { get; set; }
+
         public int Points { get; set; } = 0;
 
         public Role Role { get; set; } = Role.User;

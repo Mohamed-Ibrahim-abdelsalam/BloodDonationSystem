@@ -21,6 +21,7 @@ namespace Persistence.UnitOfWork
         private IGenericRepository<Reward>? _rewards;
         private IGenericRepository<UserReward>? _userRewards;
         private IGenericRepository<QrToken>? _qrTokens;
+        private IGenericRepository<Hospital>? _hospitals;
 
         public UnitOfWork(ApplicationDbContext ctx)
         {
@@ -47,6 +48,9 @@ namespace Persistence.UnitOfWork
 
         public IGenericRepository<QrToken> QrTokens
            => _qrTokens ??= new GenericRepository<QrToken>(_ctx);
+
+        public IGenericRepository<Hospital> Hospitals
+            => _hospitals ??= new GenericRepository<Hospital>(_ctx);
 
         public async Task<int> SaveChangesAsync()
             => await _ctx.SaveChangesAsync();

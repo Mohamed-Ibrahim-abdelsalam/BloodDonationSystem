@@ -8,29 +8,31 @@ using System.Threading.Tasks;
 
 namespace DomainLayer.Specifications
 {
+
     /// <summary>
-    /// GET /api/requests — supports filtering by BloodType, Priority, and search by creator FullName
-    /// Orders: Emergency first, then newest
+    /// GET /api/ai/match-requests — fetches OPEN requests for AI matching.
+    /// Filters by BloodType, Priority, and case-insensitive search on HospitalName or HospitalLocation.
+    /// Includes Hospital nav-prop for HospitalName fallback.
     /// </summary>
-    public class BloodRequestSpecification : BaseSpecification<BloodRequest>
+    public class OpenBloodRequestsForAiSpecification : BaseSpecification<BloodRequest>
     {
-        public BloodRequestSpecification(
+        public OpenBloodRequestsForAiSpecification(
             BloodType? bloodType = null,
             RequestPriority? priority = null,
             string? search = null)
         {
-            // Always include the creator user for FullName
             AddInclude(r => r.RequestedByUser);
+            AddInclude(r => r.Hospital);
 
-            // Build criteria chain
+            var searchLower = search?.ToLower();
+
             Criteria = r =>
+                r.Status == BloodRequestStatus.Open &&
                 (!bloodType.HasValue || r.BloodType == bloodType.Value) &&
                 (!priority.HasValue || r.Priority == priority.Value) &&
-                (string.IsNullOrEmpty(search) ||
-                    r.RequestedByUser.FullName.ToLower().Contains(search.ToLower()));
-
-            // Emergency first → then newest
-            ApplyOrderByDesc(r => r.Priority);
+                (string.IsNullOrEmpty(searchLower) ||
+                    r.HospitalName.ToLower().Contains(searchLower) ||
+                    r.HospitalLocation.ToLower().Contains(searchLower));
         }
     }
 
@@ -40,9 +42,11 @@ namespace DomainLayer.Specifications
     public class BloodRequestByIdSpecification : BaseSpecification<BloodRequest>
     {
         public BloodRequestByIdSpecification(int id)
-        {
+        { 
+    
             AddInclude(r => r.RequestedByUser);
-
+            AddInclude(r => r.Hospital);   // needed for HospitalName in response
+    
             Criteria = r => r.Id == id;
         }
     }
@@ -55,6 +59,7 @@ namespace DomainLayer.Specifications
         public BloodRequestByUserSpecification(string userId)
         {
             AddInclude(r => r.RequestedByUser);
+            AddInclude(r => r.Hospital);   // needed for HospitalName in response
 
             Criteria = r => r.RequestedByUserId == userId;
 

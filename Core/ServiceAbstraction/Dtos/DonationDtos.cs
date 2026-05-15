@@ -10,12 +10,22 @@ namespace ServiceAbstraction.Dtos
 {
     // ── Request ───────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Body for POST /api/donations.
+    /// BloodType is intentionally absent — it is read from the authenticated user's profile.
+    /// Address is intentionally absent — it is read from the authenticated user's profile.
+    /// </summary>
     public class CreateDonationDto
     {
-        public int? BloodRequestId { get; set; }   // null = general donation
+        /// <summary>
+        /// Optional. When provided the donation is linked to that blood request.
+        /// When null this is a general donation.
+        /// </summary>
+        public int? BloodRequestId { get; set; }
 
-        [Required]
-        public BloodType BloodType { get; set; }
+        /// <summary>Required. The hospital where the donation will take place.</summary>
+        [Required(ErrorMessage = "HospitalId is required.")]
+        public int HospitalId { get; set; }
 
         [Required]
         [Range(18, 60, ErrorMessage = "Age must be between 18 and 60.")]
@@ -29,44 +39,46 @@ namespace ServiceAbstraction.Dtos
 
         public DateTime? LastDonationDate { get; set; }
 
-        [Required]
-        [MaxLength(300)]
-        public string Address { get; set; } = string.Empty;
-
-        [MaxLength(500)]
-        public string MedicalCondition { get; set; } = string.Empty;
+        public bool MedicalCondition { get; set; } = false;
     }
 
     // ── Response ──────────────────────────────────────────────────────────────
 
+    /// <summary>Donor health data nested inside the POST response.</summary>
     public class DonorDataDto
     {
         public int Age { get; set; }
         public double Weight { get; set; }
         public bool HasTattoo { get; set; }
         public DateTime? LastDonationDate { get; set; }
-        public string Address { get; set; } = string.Empty;
-        public string MedicalCondition { get; set; } = string.Empty;
+
+        /// <summary>Mirrors the boolean sent in the request body.</summary>
+        public bool MedicalCondition { get; set; }
     }
 
+    /// <summary>Response for POST /api/donations.</summary>
     public class DonationResponseDto
     {
         public int Id { get; set; }
         public int? BloodRequestId { get; set; }
-        public BloodType BloodType { get; set; }
-        public DonationStatus Status { get; set; }
+        public int? HospitalId { get; set; }
+        public string HospitalName { get; set; } = string.Empty;
+        public string BloodType { get; set; } = string.Empty;   // formatted: "O+"
+        public string Status { get; set; } = string.Empty;
         public DonorDataDto DonorData { get; set; } = null!;
         public DateTime CreatedAt { get; set; }
         public string? Message { get; set; }
     }
 
+    /// <summary>Single item for GET /api/donations/my.</summary>
     public class MyDonationDto
     {
         public int Id { get; set; }
         public int? BloodRequestId { get; set; }
-        public BloodType BloodType { get; set; }
-        public string? HospitalName { get; set; }    // null for general donations
-        public DonationStatus Status { get; set; }
+        public int? HospitalId { get; set; }
+        public string HospitalName { get; set; } = string.Empty;
+        public string BloodType { get; set; } = string.Empty;   // formatted: "O+"
+        public string Status { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
     }
 }

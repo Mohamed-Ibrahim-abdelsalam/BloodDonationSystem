@@ -3,6 +3,7 @@ using BloodDonationSystem.Enums;
 using BloodDonationSystem.Models;
 using DomainLayer.Interfaces;
 using DomainLayer.Specifications;
+using Microsoft.AspNetCore.Identity;
 using ServiceAbstraction.Dtos;
 using ServiceAbstraction.Interfaces;
 using System;
@@ -17,62 +18,85 @@ namespace Service
     {
         private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public DonationService(IUnitOfWork uow, IMapper mapper)
+        public DonationService(
+            IUnitOfWork uow,
+            IMapper mapper,
+            UserManager<ApplicationUser> userManager)
         {
             _uow = uow;
             _mapper = mapper;
+            _userManager = userManager;
         }
 
         // ── POST /api/donations ───────────────────────────────────────────────
         public async Task<DonationResponseDto> CreateAsync(CreateDonationDto dto, string userId)
         {
-            // ── Validate donor data ───────────────────────────────────────────
-            if (dto.Age < 18 || dto.Age > 60)
-                throw new ArgumentException("Age must be between 18 and 60.");
+            // ── 1. Resolve authenticated user (source of BloodType) ───────────
+            var donor = await _userManager.FindByIdAsync(userId)
+                ?? throw new KeyNotFoundException("Authenticated user was not found.");
 
-            if (dto.Weight < 50)
-                throw new ArgumentException("Weight must be at least 50 kg.");
+            // ── 2. Validate hospital exists (always required) ─────────────────
+            var hospitalSpec = new HospitalByIdSpecification(dto.HospitalId);
+            var hospital = await _uow.Hospitals.GetEntityWithSpecAsync(hospitalSpec)
+                ?? throw new KeyNotFoundException(
+                    $"Hospital with id {dto.HospitalId} was not found.");
 
-            if (string.IsNullOrWhiteSpace(dto.Address))
-                throw new ArgumentException("Address is required.");
-
-            // ── Request-based donation validation ─────────────────────────────
+            // ── 3. Request-based donation extra validations ───────────────────
             if (dto.BloodRequestId.HasValue)
             {
                 var requestSpec = new BloodRequestByIdSpecification(dto.BloodRequestId.Value);
-                var bloodRequest = await _uow.BloodRequests.GetEntityWithSpecAsync(requestSpec);
-
-                // 404 — request not found
-                if (bloodRequest is null)
-                    throw new KeyNotFoundException(
+                var bloodRequest = await _uow.BloodRequests.GetEntityWithSpecAsync(requestSpec)
+                    ?? throw new KeyNotFoundException(
                         $"Blood request with id {dto.BloodRequestId.Value} was not found.");
 
-                // 400 — request not open
+                // 400 — request must be Open
                 if (bloodRequest.Status != BloodRequestStatus.Open)
                     throw new InvalidOperationException(
-                        "Cannot donate to a closed or completed blood request.");
+                        "Cannot donate to a blood request that is not Open.");
 
-                // 400 — duplicate donation (same user + same request)
+                // 400 — hospital selected must match the request's hospital
+                if (bloodRequest.HospitalId.HasValue &&
+                    bloodRequest.HospitalId.Value != dto.HospitalId)
+                    throw new InvalidOperationException(
+                        "The selected hospital does not match the blood request's hospital. " +
+                        $"Please select hospital id {bloodRequest.HospitalId.Value}.");
+
+                // 400 — prevent duplicate (same user + same request)
                 var duplicateSpec = new DuplicateDonationSpecification(
                     userId, dto.BloodRequestId.Value);
                 var existing = await _uow.Donations.GetEntityWithSpecAsync(duplicateSpec);
 
                 if (existing is not null)
                     throw new InvalidOperationException(
-                        "You have already submitted a donation for this request.");
+                        "You have already submitted a donation for this blood request.");
             }
 
-            // ── Build and save donation ───────────────────────────────────────
-            var donation = _mapper.Map<Donation>(dto);
-            donation.DonorUserId = userId;
-            donation.Status = DonationStatus.Pending;
-            donation.CreatedAt = DateTime.UtcNow;
+            // ── 4. Build the Donation entity ──────────────────────────────────
+            // BloodType comes from the authenticated user — never from the request body.
+            // Address comes from the authenticated user's profile.
+            // MedicalCondition (bool) is persisted as string in the existing DB column.
+            var donation = new Donation
+            {
+                DonorUserId = userId,
+                BloodRequestId = dto.BloodRequestId,
+                HospitalId = dto.HospitalId,
+                BloodType = donor.BloodType,           // ← from user profile
+                Age = dto.Age,
+                Weight = dto.Weight,
+                HasTattoo = dto.HasTattoo,
+                LastDonationDate = dto.LastDonationDate,
+                Address = donor.Address,             // ← from user profile
+                MedicalCondition = dto.MedicalCondition.ToString(), // bool → string (existing schema)
+                Status = DonationStatus.Pending,
+                CreatedAt = DateTime.UtcNow,
+            };
 
             await _uow.Donations.AddAsync(donation);
             await _uow.SaveChangesAsync();
 
-            // Reload with includes for full mapping
+            // ── 5. Reload with navigation properties for full response ─────────
             var spec = new DonationByIdSpecification(donation.Id);
             var created = await _uow.Donations.GetEntityWithSpecAsync(spec);
 
@@ -97,17 +121,18 @@ namespace Service
 
             // 404
             if (donation is null)
-                throw new KeyNotFoundException($"Donation with id {donationId} was not found.");
+                throw new KeyNotFoundException(
+                    $"Donation with id {donationId} was not found.");
 
-            // 403 — not the owner
+            // 403 — caller must be the owner
             if (donation.DonorUserId != userId)
                 throw new UnauthorizedAccessException(
                     "You are not authorized to cancel this donation.");
 
-            // 400 — only Pending can be cancelled
+            // 400 — only Pending donations can be cancelled
             if (donation.Status != DonationStatus.Pending)
                 throw new InvalidOperationException(
-                    "Only pending donations can be cancelled.");
+                    "Only donations with status 'Pending' can be cancelled.");
 
             donation.Status = DonationStatus.Cancelled;
             _uow.Donations.Update(donation);

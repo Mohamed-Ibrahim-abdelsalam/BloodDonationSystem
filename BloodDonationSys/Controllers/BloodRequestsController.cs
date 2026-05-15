@@ -9,7 +9,6 @@ namespace BloodDonationSystem.Controllers
     [ApiController]
     [Route("api/requests")]
     [Authorize]
-
     public class BloodRequestsController : ControllerBase
     {
         private readonly IBloodRequestService _service;
@@ -20,9 +19,16 @@ namespace BloodDonationSystem.Controllers
         }
 
         // ── POST /api/requests ────────────────────────────────────────────────
+        /// <summary>
+        /// Create a new blood request.
+        /// Priority is auto-calculated from NeededBy. HospitalName is loaded from DB.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateBloodRequestDto dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -33,18 +39,16 @@ namespace BloodDonationSystem.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
 
-        // ── GET /api/requests ─────────────────────────────────────────────────
-        [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] BloodRequestQueryParams queryParams)
-        {
-            var result = await _service.GetAllAsync(queryParams);
-            return Ok(result);
-        }
 
         // ── GET /api/requests/my ──────────────────────────────────────────────
-        // NOTE: must be declared BEFORE {id} to avoid route conflict
+        // Declared BEFORE {id} to avoid route conflict with the int-constrained route
+        /// <summary>Blood requests created by the currently authenticated user.</summary>
         [HttpGet("my")]
         public async Task<IActionResult> GetMy()
         {
@@ -54,6 +58,7 @@ namespace BloodDonationSystem.Controllers
         }
 
         // ── GET /api/requests/{id} ────────────────────────────────────────────
+        /// <summary>Single blood request detail. Priority recalculated before returning.</summary>
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -69,6 +74,7 @@ namespace BloodDonationSystem.Controllers
         }
 
         // ── DELETE /api/requests/{id} ─────────────────────────────────────────
+        /// <summary>Delete an Open blood request. Only the request owner can delete.</summary>
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {

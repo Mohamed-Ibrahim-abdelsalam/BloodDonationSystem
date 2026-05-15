@@ -18,6 +18,9 @@ namespace Service
         private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
 
+        // Threshold: if NeededBy is within this many days → Emergency
+        private const int EmergencyThresholdDays = 3;
+
         public BloodRequestService(IUnitOfWork uow, IMapper mapper)
         {
             _uow = uow;
@@ -27,65 +30,73 @@ namespace Service
         // ── POST /api/requests ────────────────────────────────────────────────
         public async Task<BloodRequestDto> CreateAsync(CreateBloodRequestDto dto, string userId)
         {
-            // Validate Quantity
+            // ── 1. Validate Hospital exists and load its name ─────────────────
+            var hospitalSpec = new HospitalByIdSpecification(dto.HospitalId);
+            var hospital = await _uow.Hospitals.GetEntityWithSpecAsync(hospitalSpec)
+                ?? throw new KeyNotFoundException(
+                    $"Hospital with id {dto.HospitalId} was not found.");
+
+            // ── 2. Validate NeededBy is a strictly future date (date only) ────
+            var neededByDate = dto.NeededBy.Date;
+            var todayUtc = DateTime.UtcNow.Date;
+
+            if (neededByDate <= todayUtc)
+                throw new ArgumentException(
+                    "NeededBy must be a future date. Today or past dates are not allowed.");
+
+            // ── 3. Validate Quantity ──────────────────────────────────────────
             if (dto.Quantity <= 0)
                 throw new ArgumentException("Quantity must be greater than 0.");
 
-            // Validate NeededBy is in the future
-            if (dto.NeededBy.HasValue && dto.NeededBy.Value <= DateTime.UtcNow)
-                throw new ArgumentException("NeededBy must be a future date.");
-
-            // Validate BloodType is a valid enum value
+            // ── 4. Validate BloodType is a defined enum value ─────────────────
             if (!Enum.IsDefined(typeof(BloodType), dto.BloodType))
-                throw new ArgumentException("Invalid BloodType value.");
+                throw new ArgumentException($"'{dto.BloodType}' is not a valid BloodType.");
 
-            // Validate Priority is a valid enum value
-            if (!Enum.IsDefined(typeof(RequestPriority), dto.Priority))
-                throw new ArgumentException("Invalid Priority value.");
+            // ── 5. Auto-calculate Priority from NeededBy ──────────────────────
+            var priority = CalculatePriority(neededByDate, todayUtc);
 
-            var request = _mapper.Map<BloodRequest>(dto);
-            request.RequestedByUserId = userId;
-            request.Status = BloodRequestStatus.Open;
-            request.CreatedAt = DateTime.UtcNow;
+            // ── 6. Build the entity ───────────────────────────────────────────
+            // hospitalName comes from DB — NOT from the request body
+            var request = new BloodRequest
+            {
+                RequestedByUserId = userId,
+                HospitalId = dto.HospitalId,
+                HospitalName = hospital.Name,       // loaded from DB
+                HospitalLocation = dto.HospitalLocation,
+                Latitude = dto.Latitude,
+                Longitude = dto.Longitude,
+                BloodType = dto.BloodType,
+                Quantity = dto.Quantity,
+                Priority = priority,             // auto-calculated
+                Status = BloodRequestStatus.Open,
+                NeededBy = neededByDate,         // date only (no time)
+                CreatedAt = DateTime.UtcNow,
+            };
 
             await _uow.BloodRequests.AddAsync(request);
             await _uow.SaveChangesAsync();
 
-            // Reload with user included for mapping
+            // ── 7. Reload with navigation properties for full response ─────────
             var spec = new BloodRequestByIdSpecification(request.Id);
             var created = await _uow.BloodRequests.GetEntityWithSpecAsync(spec);
 
-            var result = _mapper.Map<BloodRequestDto>(created);
+            var result = _mapper.Map<BloodRequestDto>(created!);
             result.Message = "Blood request created successfully";
             return result;
         }
 
-        // ── GET /api/requests ─────────────────────────────────────────────────
-        public async Task<IEnumerable<BloodRequestDto>> GetAllAsync(BloodRequestQueryParams queryParams)
-        {
-            var spec = new BloodRequestSpecification(
-                               queryParams.BloodType,
-                               queryParams.Priority,
-                               queryParams.Search);
-
-            var requests = await _uow.BloodRequests.GetAllWithSpecAsync(spec);
-
-            // Secondary sort: after Emergency first, sort by CreatedAt descending
-            var sorted = requests
-                .OrderByDescending(r => r.Priority)
-                .ThenByDescending(r => r.CreatedAt);
-
-            return _mapper.Map<IEnumerable<BloodRequestDto>>(sorted);
-        }
 
         // ── GET /api/requests/{id} ────────────────────────────────────────────
         public async Task<BloodRequestDetailDto> GetByIdAsync(int id)
         {
             var spec = new BloodRequestByIdSpecification(id);
-            var request = await _uow.BloodRequests.GetEntityWithSpecAsync(spec);
+            var request = await _uow.BloodRequests.GetEntityWithSpecAsync(spec)
+                ?? throw new KeyNotFoundException(
+                    $"Blood request with id {id} was not found.");
 
-            if (request is null)
-                throw new KeyNotFoundException($"Blood request with id {id} was not found.");
+            // Recalculate priority before returning
+            if (RefreshPriority(request))
+                await _uow.SaveChangesAsync();
 
             return _mapper.Map<BloodRequestDetailDto>(request);
         }
@@ -95,6 +106,11 @@ namespace Service
         {
             var spec = new BloodRequestByUserSpecification(userId);
             var requests = await _uow.BloodRequests.GetAllWithSpecAsync(spec);
+
+            var changed = ApplyDynamicPriority(requests.ToList());
+            if (changed)
+                await _uow.SaveChangesAsync();
+
             return _mapper.Map<IEnumerable<MyBloodRequestDto>>(requests);
         }
 
@@ -102,24 +118,80 @@ namespace Service
         public async Task DeleteAsync(int id, string userId)
         {
             var spec = new BloodRequestByIdSpecification(id);
-            var request = await _uow.BloodRequests.GetEntityWithSpecAsync(spec);
-
-            // 404
-            if (request is null)
-                throw new KeyNotFoundException($"Blood request with id {id} was not found.");
+            var request = await _uow.BloodRequests.GetEntityWithSpecAsync(spec)
+                ?? throw new KeyNotFoundException(
+                    $"Blood request with id {id} was not found.");
 
             // 403 — only owner can delete
             if (request.RequestedByUserId != userId)
                 throw new UnauthorizedAccessException(
-                    "You are not authorized to delete this request.");
+                    "You are not authorized to delete this blood request.");
 
             // 400 — only Open requests can be deleted
             if (request.Status != BloodRequestStatus.Open)
                 throw new InvalidOperationException(
-                    "Only open blood requests can be deleted.");
+                    "Only Open blood requests can be deleted.");
 
             _uow.BloodRequests.Delete(request);
             await _uow.SaveChangesAsync();
         }
-    }  
+
+        // ══════════════════════════════════════════════════════════════════════
+        // Private helpers — Priority logic
+        // ══════════════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Calculates RequestPriority based on days remaining until NeededBy.
+        /// ≤ 3 days → Emergency, otherwise → Normal.
+        /// </summary>
+        private static RequestPriority CalculatePriority(DateTime neededByDate, DateTime todayUtc)
+        {
+            var daysRemaining = (neededByDate - todayUtc).Days;
+            return daysRemaining <= EmergencyThresholdDays
+                ? RequestPriority.Emergency
+                : RequestPriority.Normal;
+        }
+
+        /// <summary>
+        /// Re-evaluates a single request's Priority.
+        /// Only upgrades Normal → Emergency (never downgrades Emergency → Normal).
+        /// Returns true when the entity was mutated and needs to be saved.
+        /// </summary>
+        private static bool RefreshPriority(BloodRequest request)
+        {
+            if (request.NeededBy is null) return false;
+            if (request.Priority == RequestPriority.Emergency) return false;  // already highest
+            if (request.Status != BloodRequestStatus.Open) return false;      // closed requests are not updated
+
+            var todayUtc = DateTime.UtcNow.Date;
+            var newPriority = CalculatePriority(request.NeededBy.Value.Date, todayUtc);
+
+            if (newPriority == RequestPriority.Emergency)
+            {
+                request.Priority = RequestPriority.Emergency;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Runs RefreshPriority over a collection and marks changed entities
+        /// via the UoW change tracker (EF Core tracks the mutated objects).
+        /// Returns true if at least one entity was updated.
+        /// </summary>
+        private bool ApplyDynamicPriority(IList<BloodRequest> requests)
+        {
+            var anyChanged = false;
+            foreach (var r in requests)
+            {
+                if (RefreshPriority(r))
+                {
+                    _uow.BloodRequests.Update(r);
+                    anyChanged = true;
+                }
+            }
+            return anyChanged;
+        }
+    }
 }
