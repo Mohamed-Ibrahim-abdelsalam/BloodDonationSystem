@@ -20,7 +20,7 @@ namespace Persistence.Data
                 var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
                 // ── Seed Roles ───────────────────────────────────────────────
-                string[] roles = { "App Admin", "Hospital Admin", "User" };
+                string[] roles = { "AppAdmin", "HospitalAdmin", "User" };
 
                 foreach (var role in roles)
                 {
@@ -48,7 +48,7 @@ namespace Persistence.Data
                         Gender      = Gender.Male,
                         Address     = "Cairo, Egypt",
                         NationalId  = "00000000000001",
-                        Role        = "App Admin",
+                        Role        = "AppAdmin",
                     },
                     new
                     {
@@ -60,7 +60,7 @@ namespace Persistence.Data
                         Gender      = Gender.Male,
                         Address     = "Alexandria, Egypt",
                         NationalId  = "00000000000002",
-                        Role        = "Hospital Admin",
+                        Role        = "HospitalAdmin",
                     },
                     new
                     {

@@ -32,9 +32,11 @@ namespace Persistence.Data.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Address = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
                     Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Address = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -90,6 +92,8 @@ namespace Persistence.Data.Migrations
                     Age = table.Column<int>(type: "int", nullable: false),
                     NationalId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Address = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    Latitude = table.Column<double>(type: "float", nullable: true),
+                    Longitude = table.Column<double>(type: "float", nullable: true),
                     Points = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
                     Role = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -214,13 +218,15 @@ namespace Persistence.Data.Migrations
                     RequestedByUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     HospitalId = table.Column<int>(type: "int", nullable: true),
                     HospitalName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    HospitalAddress = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    HospitalLocation = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    Latitude = table.Column<double>(type: "float", nullable: true),
+                    Longitude = table.Column<double>(type: "float", nullable: true),
                     BloodType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     Priority = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsBloodReceived = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    neededby = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    NeededBy = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>

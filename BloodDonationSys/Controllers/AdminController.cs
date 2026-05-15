@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Service;
 using ServiceAbstraction.Dtos;
 using ServiceAbstraction.Interfaces;
 using System.Security.Claims;
@@ -12,10 +13,12 @@ namespace BloodDonationSystem.Controllers
     public class AdminController : ControllerBase
     {
         private readonly IAdminService _service;
+        private readonly IHospitalService _hospitalService;
 
-        public AdminController(IAdminService service)
+        public AdminController(IAdminService service, IHospitalService hospitalService)
         {
             _service = service;
+            _hospitalService = hospitalService;
         }
 
         // ── GET /api/admin/requests?pageNumber=1&pageSize=5 ───────────────────
@@ -130,5 +133,78 @@ namespace BloodDonationSystem.Controllers
                 return StatusCode(403, new { message = ex.Message });
             }
         }
+
+
+        // ── POST /api/admin/hospitals ─────────────────────────────────────────
+        /// <summary>Create a new hospital. App Admin only.</summary>
+        [HttpPost("hospitals")]
+        [Authorize(Roles = "AppAdmin")]
+        public async Task<IActionResult> CreateHospital([FromBody] CreateHospitalDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _hospitalService.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetHospitals), null, result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ── GET /api/admin/hospitals ──────────────────────────────────────────
+        /// <summary>All hospitals with statistics. App Admin only.</summary>
+        [HttpGet("hospitals")]
+        [Authorize(Roles = "AppAdmin")]
+        public async Task<IActionResult> GetHospitals()
+        {
+            var result = await _hospitalService.GetAllAsync();
+            return Ok(result);
+        }
+
+        // ── PUT /api/admin/hospitals/{id} ─────────────────────────────────────
+        /// <summary>Update a hospital. App Admin only.</summary>
+        [HttpPut("hospitals/{id:int}")]
+        [Authorize(Roles = "AppAdmin")]
+        public async Task<IActionResult> UpdateHospital(int id, [FromBody] UpdateHospitalDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _hospitalService.UpdateAsync(id, dto);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ── DELETE /api/admin/hospitals/{id} ──────────────────────────────────
+        /// <summary>Delete a hospital. App Admin only.</summary>
+        [HttpDelete("hospitals/{id:int}")]
+        [Authorize(Roles = "AppAdmin")]
+        public async Task<IActionResult> DeleteHospital(int id)
+        {
+            try
+            {
+                await _hospitalService.DeleteAsync(id);
+                return Ok(new { message = "Hospital deleted successfully" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
     }
 }

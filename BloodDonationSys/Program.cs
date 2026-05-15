@@ -81,6 +81,7 @@ public class Program
         builder.Services.AddScoped<IRewardService, RewardService>();
         builder.Services.AddScoped<IQrService, QrService>();
         builder.Services.AddScoped<IAdminService, AdminService>();
+        builder.Services.AddScoped<IHospitalService, HospitalService>();
         builder.Services.AddScoped<IAiMatchService, AiMatchService>();
         builder.Services.AddHttpClient<AiMatchService>(client =>
          {

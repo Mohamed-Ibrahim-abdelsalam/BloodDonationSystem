@@ -11,14 +11,20 @@ namespace BloodDonationSystem.Models
         [MaxLength(200)]
         public string Name { get; set; } = string.Empty;
 
-        [MaxLength(300)]
-        public string? Address { get; set; }
+        [MaxLength(150)]
+        [EmailAddress]
+        public string? Email { get; set; }
 
         [MaxLength(20)]
         [Phone]
         public string? Phone { get; set; }
 
+        [MaxLength(300)]
+        public string? Address { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? UpdatedAt { get; set; }
 
         // Navigation properties
         public ICollection<ApplicationUser> HospitalAdmins { get; set; } = new List<ApplicationUser>();
