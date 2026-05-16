@@ -97,6 +97,7 @@ namespace Persistence.Data
                         NationalId = seed.NationalId,
                         EmailConfirmed = true,
                         CreatedAt = DateTime.UtcNow,
+                        Role = Enum.Parse<Role>(seed.Role)
                     };
 
                     var createResult = await userManager.CreateAsync(user, seed.Password);
