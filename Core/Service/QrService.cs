@@ -180,60 +180,106 @@ namespace Service
             };
         }
 
+       
         // ── POST /api/requests/{id}/pickup-scan ───────────────────────────────
+        // Supports TWO cases:
+        //   Case 1 — BloodRequest pickup : token.BloodRequestId is set
+        //            → User (owner) OR HospitalAdmin can scan
+        //            → BloodRequest.Status = Completed
+        //
+        //   Case 2 — General donation withdrawal : token.DonationId is set, no BloodRequest
+        //            → HospitalAdmin only
+        //            → Donation.Status = Withdrawn
         public async Task<PickupScanResponseDto> ScanPickupQrAsync(
-            int requestId, string qrToken, string userId)
+            int requestId, string qrToken, string userId, string userRole)
         {
+            // ── 1. Validate QR token ──────────────────────────────────────────
             var tokenSpec = new QrTokenByValueSpecification(qrToken);
             var token = await _uow.QrTokens.GetEntityWithSpecAsync(tokenSpec);
 
-            // 404
             if (token is null)
                 throw new KeyNotFoundException("QR token not found.");
 
-            // 400 — wrong type
             if (token.Type != QrTokenType.Pickup)
                 throw new InvalidOperationException("Invalid QR token type. Expected a Pickup QR.");
 
-            // 400 — expired
             if (token.ExpiryDate < DateTime.UtcNow)
                 throw new InvalidOperationException("QR token has expired.");
 
-            // 400 — already used
             if (token.IsUsed)
                 throw new InvalidOperationException("QR token has already been used.");
 
-            // 400 — token doesn't match route id
-            if (token.BloodRequestId != requestId)
-                throw new InvalidOperationException("QR token does not match the provided request ID.");
+            // ── 2. Route to correct case based on what the token is linked to ─
+            bool isHospitalAdmin = userRole == "HospitalAdmin";
 
-            // Get blood request with owner check
-            var requestSpec = new BloodRequestByIdSpecification(requestId);
-            var bloodRequest = await _uow.BloodRequests.GetEntityWithSpecAsync(requestSpec)
-                ?? throw new KeyNotFoundException($"Blood request with id {requestId} was not found.");
-
-            // 403 — only the request owner can scan the pickup QR
-            if (bloodRequest.RequestedByUserId != userId)
-                throw new UnauthorizedAccessException(
-                    "You are not authorized to scan the pickup QR for this request.");
-
-            // Mark token as used
-            token.IsUsed = true;
-            _uow.QrTokens.Update(token);
-
-            // Mark request as Completed
-            bloodRequest.Status = BloodRequestStatus.Completed;
-            bloodRequest.IsBloodReceived = true;
-            _uow.BloodRequests.Update(bloodRequest);
-
-            await _uow.SaveChangesAsync();
-
-            return new PickupScanResponseDto
+            // ── CASE 1: Token linked to a BloodRequest ────────────────────────
+            if (token.BloodRequestId.HasValue)
             {
-                Message = "Blood received successfully",
-                RequestId = requestId,
-                Status = BloodRequestStatus.Completed.ToString(),
-            };
+                var requestSpec = new BloodRequestByIdSpecification(token.BloodRequestId.Value);
+                var bloodRequest = await _uow.BloodRequests.GetEntityWithSpecAsync(requestSpec)
+                    ?? throw new KeyNotFoundException(
+                        $"Blood request with id {token.BloodRequestId.Value} was not found.");
+
+                // Authorization: request owner OR HospitalAdmin
+                bool isOwner = bloodRequest.RequestedByUserId == userId;
+                if (!isOwner && !isHospitalAdmin)
+                    throw new UnauthorizedAccessException(
+                        "You are not authorized to confirm this blood pickup. " +
+                        "Only the request owner or a Hospital Admin can scan this QR.");
+
+                // Mark token used
+                token.IsUsed = true;
+                _uow.QrTokens.Update(token);
+
+                // Complete the request
+                bloodRequest.Status = BloodRequestStatus.Completed;
+                bloodRequest.IsBloodReceived = true;
+                _uow.BloodRequests.Update(bloodRequest);
+
+                await _uow.SaveChangesAsync();
+
+                return new PickupScanResponseDto
+                {
+                    Message = "Blood pickup confirmed successfully",
+                    RequestId = bloodRequest.Id,
+                    Status = BloodRequestStatus.Completed.ToString(),
+                };
+            }
+
+            // ── CASE 2: Token linked to a General Donation (no BloodRequest) ──
+            if (token.DonationId.HasValue)
+            {
+                // Only HospitalAdmin can withdraw from general stock
+                if (!isHospitalAdmin)
+                    throw new UnauthorizedAccessException(
+                        "Only a Hospital Admin can confirm withdrawal of a general donation.");
+
+                var donationSpec = new DonationByIdSpecification(token.DonationId.Value);
+                var donation = await _uow.Donations.GetEntityWithSpecAsync(donationSpec)
+                    ?? throw new KeyNotFoundException(
+                        $"Donation with id {token.DonationId.Value} was not found.");
+
+                // Mark token used
+                token.IsUsed = true;
+                _uow.QrTokens.Update(token);
+
+                // Mark donation as Withdrawn from hospital stock
+                donation.Status = DonationStatus.Withdrawn;
+                _uow.Donations.Update(donation);
+
+                await _uow.SaveChangesAsync();
+
+                return new PickupScanResponseDto
+                {
+                    Message = "Blood bag withdrawn successfully",
+                    DonationId = donation.Id,
+                    Status = DonationStatus.Withdrawn.ToString(),
+                };
+            }
+
+            // ── Fallback: token has neither BloodRequestId nor DonationId ─────
+            throw new InvalidOperationException(
+                "QR token is not linked to any blood request or donation.");
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────

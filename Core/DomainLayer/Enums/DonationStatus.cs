@@ -5,6 +5,7 @@ namespace BloodDonationSystem.Enums
         Pending,
         Confirmed,
         Rejected,
-        Cancelled
+        Cancelled,
+        Withdrawn
     }
 }

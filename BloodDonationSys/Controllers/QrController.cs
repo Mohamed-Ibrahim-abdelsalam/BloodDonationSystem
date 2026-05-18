@@ -82,7 +82,10 @@ namespace BloodDonationSystem.Controllers
         }
 
         // ── POST /api/requests/{id}/pickup-scan ───────────────────────────────
+        // Case 1 — BloodRequest pickup   → User (owner) OR HospitalAdmin → Completed
+        // Case 2 — General donation withdrawal → HospitalAdmin only → Withdrawn
         [HttpPost("{id:int}/pickup-scan")]
+        [Authorize(Roles = "User,HospitalAdmin")]
         public async Task<IActionResult> ScanPickupQr(int id, [FromBody] ScanQrDto dto)
         {
             if (!ModelState.IsValid)
@@ -91,7 +94,8 @@ namespace BloodDonationSystem.Controllers
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-                var result = await _qrService.ScanPickupQrAsync(id, dto.QrToken, userId);
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+                var result = await _qrService.ScanPickupQrAsync(id, dto.QrToken, userId, userRole);
                 return Ok(result);
             }
             catch (KeyNotFoundException ex)

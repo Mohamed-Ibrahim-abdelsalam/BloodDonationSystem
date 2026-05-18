@@ -18,7 +18,8 @@ namespace ServiceAbstraction.Interfaces
         // Hospital scans donation QR → confirms receiving blood from donor
         Task<DonationScanResponseDto> ScanDonationQrAsync(int donationId, string qrToken, string hospitalAdminId);
 
-        // User (patient) scans pickup QR → confirms receiving blood bag
-        Task<PickupScanResponseDto> ScanPickupQrAsync(int requestId, string qrToken, string userId);
+        // User or HospitalAdmin scans pickup QR\n'
+         // Case 1 (BloodRequest) → Completed | Case 2 (General Donation) → Withdrawn\n'
+       Task<PickupScanResponseDto> ScanPickupQrAsync(int requestId, string qrToken, string userId, string userRole);
     }
 }

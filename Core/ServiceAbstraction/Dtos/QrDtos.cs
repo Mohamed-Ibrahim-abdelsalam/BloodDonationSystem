@@ -28,6 +28,8 @@ namespace ServiceAbstraction.Dtos
     {
         public string Message { get; set; } = string.Empty;
         public int RequestId { get; set; }
+        public int? DonationId { get; set; }
+
         public string Status { get; set; } = string.Empty;
     }
 
