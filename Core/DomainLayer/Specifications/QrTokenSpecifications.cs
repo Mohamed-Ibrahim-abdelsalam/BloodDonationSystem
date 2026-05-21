@@ -50,4 +50,22 @@ namespace DomainLayer.Specifications
                 q.ExpiryDate > DateTime.UtcNow;
         }
     }
+
+
+
+    /// <summary>
+    /// Find an active (not used, not expired) Pickup QR linked to a specific Donation.
+    /// Used when generating withdrawal QR for general donations.
+    /// </summary>
+    public class ActiveDonationPickupQrSpecification : BaseSpecification<QrToken>
+    {
+        public ActiveDonationPickupQrSpecification(int donationId)
+        {
+            Criteria = t =>
+                t.DonationId == donationId &&
+                t.Type == QrTokenType.Pickup &&
+                !t.IsUsed &&
+                t.ExpiryDate > DateTime.UtcNow;
+        }
+    }
 }

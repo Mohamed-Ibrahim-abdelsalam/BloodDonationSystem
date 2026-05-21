@@ -15,6 +15,9 @@ namespace ServiceAbstraction.Interfaces
         // Hospital Admin generates pickup QR for a request
         Task<QrTokenResponseDto> GeneratePickupQrAsync(int requestId, string userId);
 
+        // HospitalAdmin generates withdrawal QR for a general donation (no BloodRequest)
+        Task<QrTokenResponseDto> GenerateGeneralDonationPickupQrAsync(int donationId, string hospitalAdminId);
+
         // Hospital scans donation QR → confirms receiving blood from donor
         Task<DonationScanResponseDto> ScanDonationQrAsync(int donationId, string qrToken, string hospitalAdminId);
 

@@ -128,8 +128,39 @@ namespace BloodDonationSystem.Controllers
             _qrService = qrService;
         }
 
+
+         // ── GET /api/hospital/donations/{id}/pickup-qr ─────────────────────────
+         // Generate withdrawal QR for a general donation (no BloodRequest)
+        [HttpGet("donations/{id:int}/pickup-qr")]
+        [Authorize(Roles = "HospitalAdmin")]
+        public async Task<IActionResult> GenerateGeneralDonationPickupQr(int id)
+        {
+           try
+              {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+                var result = await _qrService.GenerateGeneralDonationPickupQrAsync(id, userId);
+                    return Ok(result);
+              }
+                catch (KeyNotFoundException ex)
+                {
+                   return NotFound(new { message = ex.Message });
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                   return StatusCode(403, new { message = ex.Message });
+                }
+               catch (InvalidOperationException ex)
+               {
+                  return BadRequest(new { message = ex.Message });
+               }
+        }
+
+
+
+
         // ── POST /api/hospital/donations/{id}/scan ────────────────────────────
         [HttpPost("donations/{id:int}/scan")]
+        [Authorize(Roles = "HospitalAdmin")]
         public async Task<IActionResult> ScanDonationQr(int id, [FromBody] ScanQrDto dto)
         {
             if (!ModelState.IsValid)
@@ -150,5 +181,9 @@ namespace BloodDonationSystem.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+
+
+
     }
 }

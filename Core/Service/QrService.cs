@@ -112,12 +112,83 @@ namespace Service
             return MapToQrResponse(qrToken, requestId);
         }
 
+
+
+
+        // ── GET /api/hospital/donations/{id}/pickup-qr ───────────────────────
+        // HospitalAdmin generates a Pickup QR for a general donation (no BloodRequest)
+        // This enables Case 2 of ScanPickupQr — withdrawing blood from general stock
+        public async Task<QrTokenResponseDto> GenerateGeneralDonationPickupQrAsync(
+            int donationId, string hospitalAdminId)
+        {
+            // Verify admin and their hospital
+            var admin = await _userManager.FindByIdAsync(hospitalAdminId)
+                ?? throw new KeyNotFoundException("Hospital admin not found.");
+
+            if (!admin.HospitalId.HasValue)
+                throw new InvalidOperationException(
+                    "Your account is not linked to any hospital.");
+
+            var donationSpec = new DonationByIdSpecification(donationId);
+            var donation = await _uow.Donations.GetEntityWithSpecAsync(donationSpec)
+                ?? throw new KeyNotFoundException($"Donation with id {donationId} was not found.");
+
+            // Must be a general donation (no BloodRequest linked)
+            if (donation.BloodRequestId.HasValue)
+                throw new InvalidOperationException(
+                    "This donation is linked to a blood request. " +
+                    "Use the request pickup QR instead.");
+
+            // Must be confirmed (blood bag exists in inventory)
+            if (donation.Status != DonationStatus.Confirmed)
+                throw new InvalidOperationException(
+                    "Pickup QR can only be generated for confirmed donations.");
+
+            // Must belong to admin's hospital
+            if (donation.HospitalId != admin.HospitalId.Value)
+                throw new UnauthorizedAccessException(
+                    "This donation does not belong to your hospital.");
+
+            // Return existing active token if available
+            var existingSpec = new ActiveDonationPickupQrSpecification(donationId);
+            var existingToken = await _uow.QrTokens.GetEntityWithSpecAsync(existingSpec);
+            if (existingToken is not null)
+                return MapToQrResponse(existingToken, donationId);
+
+            var qrToken = new QrToken
+            {
+                Token = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N"),
+                Type = QrTokenType.Pickup,
+                DonationId = donationId,      // linked to donation, NOT a BloodRequest
+                BloodRequestId = null,
+                ExpiryDate = DateTime.UtcNow.AddMinutes(QrExpiryMinutes),
+                IsUsed = false,
+                CreatedAt = DateTime.UtcNow,
+            };
+
+            await _uow.QrTokens.AddAsync(qrToken);
+            await _uow.SaveChangesAsync();
+
+            return MapToQrResponse(qrToken, donationId);
+        }
+
+
+
+
         // ── POST /api/hospital/donations/{id}/scan ────────────────────────────
         public async Task<DonationScanResponseDto> ScanDonationQrAsync(
             int donationId, string qrToken, string hospitalAdminId)
         {
             var tokenSpec = new QrTokenByValueSpecification(qrToken);
             var token = await _uow.QrTokens.GetEntityWithSpecAsync(tokenSpec);
+
+
+            // Verify the scanning admin belongs to the same hospital as the donation\n'
+            var admin = await _userManager.FindByIdAsync(hospitalAdminId)
+                   ?? throw new KeyNotFoundException("Hospital admin not found.");
+       
+            if (!admin.HospitalId.HasValue)
+                throw new InvalidOperationException("Your account is not linked to any hospital.");
 
             // 404
             if (token is null)
@@ -147,10 +218,15 @@ namespace Service
             var donationSpec = new DonationByIdSpecification(donationId);
             var donation = await _uow.Donations.GetEntityWithSpecAsync(donationSpec)
                 ?? throw new KeyNotFoundException($"Donation with id {donationId} was not found.");
-
-            donation.Status = DonationStatus.Confirmed;
-            donation.ConfirmedAt = DateTime.UtcNow;
-            _uow.Donations.Update(donation);
+            // Verify donation belongs to admin\'s hospital\n'
+                        if (donation.HospitalId.HasValue &&
+                            donation.HospitalId.Value != admin.HospitalId.Value)
+                            throw new UnauthorizedAccessException(
+                                "This donation is not assigned to your hospital.");
+            
+              donation.Status = DonationStatus.Confirmed;
+              donation.ConfirmedAt = DateTime.UtcNow;
+                _uow.Donations.Update(donation); //////////////////////
 
             // ── FIX 1: Quantity-aware Fulfillment ────────────────────────────────
             // Only mark BloodRequest as Fulfilled when confirmed donation count
