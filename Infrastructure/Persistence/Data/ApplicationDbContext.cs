@@ -23,6 +23,7 @@ namespace BloodDonationSystem.Data
         public DbSet<Reward> Rewards { get; set; }
         public DbSet<UserReward> UserRewards { get; set; }
         public DbSet<HospitalInventory> HospitalInventories { get; set; }
+        public DbSet<BloodBag> BloodBags { get; set; }
         public DbSet<InventoryLog> InventoryLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

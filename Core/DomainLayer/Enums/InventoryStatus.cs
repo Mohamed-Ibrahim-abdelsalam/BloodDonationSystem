@@ -2,7 +2,7 @@ namespace BloodDonationSystem.Enums
 {
     public enum InventoryStatus
     {
-        Available,
+        High,
         Low,
         Critical
     }

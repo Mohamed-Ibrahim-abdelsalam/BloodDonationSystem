@@ -1,4 +1,5 @@
 ﻿using BloodDonationSystem.Models;
+using DomainLayer.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,4 +52,36 @@ namespace DomainLayer.Specifications
                 d.BloodRequestId == bloodRequestId;
         }
     }
+
+
+    // ── Fix 2: Blood Bag specs ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// Fetch the BloodBag linked to a specific donation.
+    /// Used to mark bag as Withdrawn when pickup scan Case 2 occurs.
+    /// </summary>
+    public class BloodBagByDonationSpecification : BaseSpecification<BloodBag>
+    {
+        public BloodBagByDonationSpecification(int donationId)
+        {
+            Criteria = bag => bag.DonationId == donationId;
+        }
+    }
+
+    // ── Fix 1: Count confirmed donations for a request ─────────────────────────
+
+    /// <summary>
+    /// COUNT — confirmed donations linked to a specific blood request.
+    /// Used to check if confirmed count >= request.Quantity before Fulfilling.
+    /// </summary>
+    public class ConfirmedDonationsByRequestSpecification : BaseSpecification<Donation>
+    {
+        public ConfirmedDonationsByRequestSpecification(int bloodRequestId)
+        {
+            Criteria = d =>
+                d.BloodRequestId == bloodRequestId &&
+                d.Status == BloodDonationSystem.Enums.DonationStatus.Confirmed;
+        }
+    }
+
 }

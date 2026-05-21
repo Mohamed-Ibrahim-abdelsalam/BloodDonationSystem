@@ -1,4 +1,5 @@
 ﻿using BloodDonationSystem.Models;
+using DomainLayer.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,8 @@ namespace DomainLayer.Interfaces
         IGenericRepository<UserReward> UserRewards { get; }
         IGenericRepository<QrToken> QrTokens { get; }
         IGenericRepository<Hospital> Hospitals { get; }
+        IGenericRepository<HospitalInventory> HospitalInventories { get; }
+        IGenericRepository<BloodBag> BloodBags { get; }
 
         Task<int> SaveChangesAsync();
     }

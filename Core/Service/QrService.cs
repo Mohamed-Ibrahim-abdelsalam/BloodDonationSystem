@@ -1,6 +1,8 @@
 ﻿using BloodDonationSystem.Enums;
 using BloodDonationSystem.Models;
+using DomainLayer.Enums;
 using DomainLayer.Interfaces;
+using DomainLayer.Models;
 using DomainLayer.Specifications;
 using Microsoft.AspNetCore.Identity;
 using ServiceAbstraction.Dtos;
@@ -150,15 +152,27 @@ namespace Service
             donation.ConfirmedAt = DateTime.UtcNow;
             _uow.Donations.Update(donation);
 
-            // Mark request as Fulfilled (ready for pickup)
+            // ── FIX 1: Quantity-aware Fulfillment ────────────────────────────────
+            // Only mark BloodRequest as Fulfilled when confirmed donation count
+            // reaches the requested quantity — not just on the first donation.
             if (donation.BloodRequestId.HasValue)
             {
                 var requestSpec = new BloodRequestByIdSpecification(donation.BloodRequestId.Value);
                 var bloodRequest = await _uow.BloodRequests.GetEntityWithSpecAsync(requestSpec);
-                if (bloodRequest is not null)
+                if (bloodRequest is not null && bloodRequest.Status == BloodRequestStatus.Open)
                 {
-                    bloodRequest.Status = BloodRequestStatus.Fulfilled;
-                    _uow.BloodRequests.Update(bloodRequest);
+                    // Count all confirmed donations for this request AFTER this one is saved.
+                    // We add 1 manually because the current donation is Confirmed in memory
+                    // but SaveChangesAsync hasn't run yet.
+                    var countSpec = new ConfirmedDonationsByRequestSpecification(donation.BloodRequestId.Value);
+                    var confirmedSoFar = await _uow.Donations.CountAsync(countSpec);
+                    var totalConfirmed = confirmedSoFar + 1; // include the current donation
+
+                    if (totalConfirmed >= bloodRequest.Quantity)
+                    {
+                        bloodRequest.Status = BloodRequestStatus.Fulfilled;
+                        _uow.BloodRequests.Update(bloodRequest);
+                    }
                 }
             }
 
@@ -168,6 +182,23 @@ namespace Service
             {
                 donor.Points += 50;
                 await _userManager.UpdateAsync(donor);
+            }
+
+            // ── Auto-create BloodBag on successful donation scan ──────────────
+            // CreatedAt = scan timestamp | ExpiryDate = CreatedAt + 42 days
+            if (donation.HospitalId.HasValue)
+            {
+                var scanTime = donation.ConfirmedAt ?? DateTime.UtcNow;
+                var bloodBag = new BloodBag
+                {
+                    DonationId = donationId,
+                    HospitalId = donation.HospitalId.Value,
+                    BloodType = donation.BloodType,
+                    Status = BloodBagStatus.Available,
+                    CreatedAt = scanTime,
+                    ExpiryDate = scanTime.AddDays(42),
+                };
+                await _uow.BloodBags.AddAsync(bloodBag);
             }
 
             await _uow.SaveChangesAsync();
@@ -266,6 +297,17 @@ namespace Service
                 // Mark donation as Withdrawn from hospital stock
                 donation.Status = DonationStatus.Withdrawn;
                 _uow.Donations.Update(donation);
+
+                // ── FIX 2: Mark the corresponding BloodBag as Withdrawn ───────
+                // Without this the blood bag stays "Available" in inventory
+                // even though the physical bag has left the hospital.
+                var bagSpec = new BloodBagByDonationSpecification(donation.Id);
+                var bloodBag = await _uow.BloodBags.GetEntityWithSpecAsync(bagSpec);
+                if (bloodBag is not null)
+                {
+                    bloodBag.Status = BloodBagStatus.Withdrawn;
+                    _uow.BloodBags.Update(bloodBag);
+                }
 
                 await _uow.SaveChangesAsync();
 

@@ -22,22 +22,25 @@ namespace BloodDonationSystem.Models
         [Required]
         public int Quantity { get; set; }
 
-        // Status is automatically computed based on Quantity — never set manually.
-        public InventoryStatus Status
+        /// <summary>
+        /// Nearest expiry date among available blood bags of this type.
+        public DateTime? ExpiryDate { get; set; }
+
+        /// <summary>
+        /// Computed dynamically from Quantity — never stored.
+        /// High: >= 10 | Low: 3–9 | Critical: < 3
+        /// </summary>
+        [NotMapped]
+        public InventoryStatus Status => Quantity switch
         {
-            get
-            {
-                if (Quantity == 0) return InventoryStatus.Critical;
-                if (Quantity <= 5) return InventoryStatus.Low;
-                return InventoryStatus.Available;
-            }
-            private set { /* EF Core materialisation */ }
-        }
+            >= 10 => InventoryStatus.High,
+            >= 3 => InventoryStatus.Low,
+            _ => InventoryStatus.Critical,
+        };
 
         [Required]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // Nullable FK: the admin who last updated this record
         public string? UpdatedByAdminId { get; set; }
 
         [ForeignKey(nameof(UpdatedByAdminId))]
@@ -47,7 +50,6 @@ namespace BloodDonationSystem.Models
         [MaxLength(20)]
         public string UpdateSource { get; set; } = "Auto";
 
-        // ─── Navigation properties ──────────────────────────────────────────────
         public ICollection<InventoryLog> InventoryLogs { get; set; } = new List<InventoryLog>();
     }
 }

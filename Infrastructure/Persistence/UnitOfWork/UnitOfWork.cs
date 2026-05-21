@@ -1,6 +1,7 @@
 ﻿using BloodDonationSystem.Data;
 using BloodDonationSystem.Models;
 using DomainLayer.Interfaces;
+using DomainLayer.Models;
 using Persistence.Repositories;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,8 @@ namespace Persistence.UnitOfWork
         private IGenericRepository<UserReward>? _userRewards;
         private IGenericRepository<QrToken>? _qrTokens;
         private IGenericRepository<Hospital>? _hospitals;
+        private IGenericRepository<HospitalInventory>? _hospitalInventories;
+        private IGenericRepository<BloodBag>? _bloodBags;
 
         public UnitOfWork(ApplicationDbContext ctx)
         {
@@ -51,6 +54,12 @@ namespace Persistence.UnitOfWork
 
         public IGenericRepository<Hospital> Hospitals
             => _hospitals ??= new GenericRepository<Hospital>(_ctx);
+
+        public IGenericRepository<HospitalInventory> HospitalInventories
+            => _hospitalInventories ??= new GenericRepository<HospitalInventory>(_ctx);
+
+        public IGenericRepository<BloodBag> BloodBags
+               => _bloodBags ??= new GenericRepository<BloodBag>(_ctx);
 
         public async Task<int> SaveChangesAsync()
             => await _ctx.SaveChangesAsync();
