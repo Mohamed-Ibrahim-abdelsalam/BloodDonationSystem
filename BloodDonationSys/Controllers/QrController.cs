@@ -63,6 +63,7 @@ namespace BloodDonationSystem.Controllers
 
         // ── GET /api/requests/{id}/pickup-qr ─────────────────────────────────
         [HttpGet("{id:int}/pickup-qr")]
+        [Authorize(Roles = "HospitalAdmin")]
         public async Task<IActionResult> GeneratePickupQr(int id)
         {
             try
