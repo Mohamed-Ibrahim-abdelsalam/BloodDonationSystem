@@ -1,7 +1,8 @@
 using BloodDonationSystem.Data;
 using BloodDonationSystem.Enums;
 using BloodDonationSystem.Models;
-using DomainLayer.Enums;
+using DomainLayer.Enums;   
+using DomainLayer.Models;  
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,48 +20,48 @@ namespace Persistence.Data
     public static class MainDbSeed
     {
         // ── Existing hospital IDs (already in DB) ─────────────────────────────
-        private const int H_CairoUniversity   =  1;   // Cairo University Hospital
-        private const int H_AbuElReesh        =  2;   // Abu El Reesh Children Hospital
-        private const int H_AinShams          =  3;   // Ain Shams University Hospital
-        private const int H_AlAgouza          =  4;   // Al Agouza Hospital
-        private const int H_AlDemerdash       =  5;   // Al Demerdash Hospital
-        private const int H_AlGalaa           =  6;   // Al Galaa Military Hospital
-        private const int H_AlHaram           =  7;   // Al Haram Hospital
-        private const int H_AlSalam           =  8;   // Al Salam International Hospital
-        private const int H_Cleopatra         =  9;   // Cleopatra Hospital
-        private const int H_ElSahel           = 10;   // El Sahel Teaching Hospital
-        private const int H_ElShorouq         = 11;   // El Shorouq Hospital
-        private const int H_Heliopolis        = 12;   // Heliopolis Hospital
-        private const int H_IntlMedical       = 13;   // International Medical Center
-        private const int H_KobryElKobba      = 14;   // Kobry El Kobba Military Hospital
-        private const int H_MaadiMilitary     = 15;   // Maadi Military Hospital
-        private const int H_MisrIntl          = 16;   // Misr International Hospital
-        private const int H_NationalCancer    = 17;   // National Cancer Institute
-        private const int H_Oct6University    = 18;   // October 6 University Hospital
-        private const int H_SalamCity         = 19;   // Salam City Hospital
-        private const int H_Shubra            = 20;   // Shubra El Kheima Hospital
-        private const int H_WadiElNeel        = 21;   // Wadi El Neel Hospital
-        private const int H_ZayedSpecialized  = 22;   // Zayed Specialized Hospital
+        private const int H_CairoUniversity = 1;   // Cairo University Hospital
+        private const int H_AbuElReesh = 2;   // Abu El Reesh Children Hospital
+        private const int H_AinShams = 3;   // Ain Shams University Hospital
+        private const int H_AlAgouza = 4;   // Al Agouza Hospital
+        private const int H_AlDemerdash = 5;   // Al Demerdash Hospital
+        private const int H_AlGalaa = 6;   // Al Galaa Military Hospital
+        private const int H_AlHaram = 7;   // Al Haram Hospital
+        private const int H_AlSalam = 8;   // Al Salam International Hospital
+        private const int H_Cleopatra = 9;   // Cleopatra Hospital
+        private const int H_ElSahel = 10;   // El Sahel Teaching Hospital
+        private const int H_ElShorouq = 11;   // El Shorouq Hospital
+        private const int H_Heliopolis = 12;   // Heliopolis Hospital
+        private const int H_IntlMedical = 13;   // International Medical Center
+        private const int H_KobryElKobba = 14;   // Kobry El Kobba Military Hospital
+        private const int H_MaadiMilitary = 15;   // Maadi Military Hospital
+        private const int H_MisrIntl = 16;   // Misr International Hospital
+        private const int H_NationalCancer = 17;   // National Cancer Institute
+        private const int H_Oct6University = 18;   // October 6 University Hospital
+        private const int H_SalamCity = 19;   // Salam City Hospital
+        private const int H_Shubra = 20;   // Shubra El Kheima Hospital
+        private const int H_WadiElNeel = 21;   // Wadi El Neel Hospital
+        private const int H_ZayedSpecialized = 22;   // Zayed Specialized Hospital
 
         // ── Existing reward IDs (already in DB) ───────────────────────────────
-        private const int R_FreeMedicalCheckup      = 1;   // 50  pts
-        private const int R_PharmacyDiscount         = 2;   // 100 pts
-        private const int R_BloodTestPackage          = 3;   // 150 pts
-        private const int R_HospitalPriorityService   = 4;   // 200 pts
-        private const int R_FullHealthPackage          = 5;   // 250 pts
+        private const int R_FreeMedicalCheckup = 1;   // 50  pts
+        private const int R_PharmacyDiscount = 2;   // 100 pts
+        private const int R_BloodTestPackage = 3;   // 150 pts
+        private const int R_HospitalPriorityService = 4;   // 200 pts
+        private const int R_FullHealthPackage = 5;   // 250 pts
 
         // ── Short blood-type format for HospitalInventory & InventoryLog ──────
         private static string Short(BloodType bt) => bt switch
         {
-            BloodType.A_Positive  => "A+",
-            BloodType.A_Negative  => "A-",
-            BloodType.B_Positive  => "B+",
-            BloodType.B_Negative  => "B-",
+            BloodType.A_Positive => "A+",
+            BloodType.A_Negative => "A-",
+            BloodType.B_Positive => "B+",
+            BloodType.B_Negative => "B-",
             BloodType.AB_Positive => "AB+",
             BloodType.AB_Negative => "AB-",
-            BloodType.O_Positive  => "O+",
-            BloodType.O_Negative  => "O-",
-            _                     => "O+",
+            BloodType.O_Positive => "O+",
+            BloodType.O_Negative => "O-",
+            _ => "O+",
         };
 
         // ── Entry point ───────────────────────────────────────────────────────
@@ -68,7 +69,7 @@ namespace Persistence.Data
         {
             try
             {
-                var context     = serviceProvider.GetRequiredService<ApplicationDbContext>();
+                var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
                 var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
                 // ═════════════════════════════════════════════════════════════
@@ -99,20 +100,20 @@ namespace Persistence.Data
 
                     var user = new ApplicationUser
                     {
-                        FullName       = s.FullName,
-                        Email          = s.Email,
-                        UserName       = s.Email,
-                        PhoneNumber    = s.Phone,
-                        Age            = s.Age,
-                        Gender         = s.Gender,
-                        BloodType      = BloodType.O_Positive,
-                        Address        = s.Address,
-                        NationalId     = s.NatId,
-                        HospitalId     = s.HospId,
-                        Role           = Role.HospitalAdmin,
+                        FullName = s.FullName,
+                        Email = s.Email,
+                        UserName = s.Email,
+                        PhoneNumber = s.Phone,
+                        Age = s.Age,
+                        Gender = s.Gender,
+                        BloodType = BloodType.O_Positive,
+                        Address = s.Address,
+                        NationalId = s.NatId,
+                        HospitalId = s.HospId,
+                        Role = Role.HospitalAdmin,
                         EmailConfirmed = true,
-                        CreatedAt      = DateTime.UtcNow.AddMonths(-5),
-                        Points         = 0,
+                        CreatedAt = DateTime.UtcNow.AddMonths(-5),
+                        Points = 0,
                     };
 
                     var result = await userManager.CreateAsync(user, s.Password);
@@ -157,19 +158,19 @@ namespace Persistence.Data
 
                     var user = new ApplicationUser
                     {
-                        FullName       = s.FullName,
-                        Email          = s.Email,
-                        UserName       = s.Email,
-                        PhoneNumber    = s.Phone,
-                        Age            = s.Age,
-                        Gender         = s.Gender,
-                        BloodType      = s.BT,
-                        Address        = s.Address,
-                        NationalId     = s.NatId,
-                        Role           = Role.User,
+                        FullName = s.FullName,
+                        Email = s.Email,
+                        UserName = s.Email,
+                        PhoneNumber = s.Phone,
+                        Age = s.Age,
+                        Gender = s.Gender,
+                        BloodType = s.BT,
+                        Address = s.Address,
+                        NationalId = s.NatId,
+                        Role = Role.User,
                         EmailConfirmed = true,
-                        CreatedAt      = DateTime.UtcNow.AddMonths(-2),
-                        Points         = s.Points,
+                        CreatedAt = DateTime.UtcNow.AddMonths(-2),
+                        Points = s.Points,
                     };
 
                     var result = await userManager.CreateAsync(user, s.Password);
@@ -184,7 +185,7 @@ namespace Persistence.Data
 
                 // Safety index helpers
                 string D(int i) => donorIds.Count > i ? donorIds[i] : donorIds[0];
-                string A(int i) => adminIds.Count  > i ? adminIds[i]  : adminIds[0];
+                string A(int i) => adminIds.Count > i ? adminIds[i] : adminIds[0];
 
                 // ═════════════════════════════════════════════════════════════
                 // 3.  HOSPITAL INVENTORIES  (8 blood types × 10 hospitals = 80)
@@ -223,12 +224,12 @@ namespace Persistence.Data
                         {
                             inventories.Add(new HospitalInventory
                             {
-                                HospitalId       = hospId,
-                                BloodType        = bt.Key,
-                                Quantity         = Math.Max(0, (int)(bt.Value * scale)),
-                                UpdatedAt        = DateTime.UtcNow.AddDays(-5),
+                                HospitalId = hospId,
+                                BloodType = bt.Key,
+                                Quantity = Math.Max(0, (int)(bt.Value * scale)),
+                                UpdatedAt = DateTime.UtcNow.AddDays(-5),
                                 UpdatedByAdminId = A(adminIdx),
-                                UpdateSource     = "Admin",
+                                UpdateSource = "Admin",
                             });
                         }
                     }
@@ -422,7 +423,7 @@ namespace Persistence.Data
                             Age = 32, Weight = 80, HasTattoo = false,
                             LastDonationDate = DateTime.UtcNow.AddMonths(-4),
                             Address          = "Zamalek, Cairo",
-                            MedicalCondition = "",
+                            MedicalCondition = "False",
                             Status           = DonationStatus.Confirmed,
                             CreatedAt        = DateTime.UtcNow.AddDays(-8),
                             ConfirmedAt      = DateTime.UtcNow.AddDays(-7),
@@ -437,7 +438,7 @@ namespace Persistence.Data
                             Age = 35, Weight = 75, HasTattoo = false,
                             LastDonationDate = DateTime.UtcNow.AddMonths(-5),
                             Address          = "Maadi, Cairo",
-                            MedicalCondition = "",
+                            MedicalCondition = "False",
                             Status           = DonationStatus.Confirmed,
                             CreatedAt        = DateTime.UtcNow.AddDays(-18),
                             ConfirmedAt      = DateTime.UtcNow.AddDays(-17),
@@ -452,7 +453,7 @@ namespace Persistence.Data
                             Age = 30, Weight = 70, HasTattoo = false,
                             LastDonationDate = null,
                             Address          = "Dokki, Giza",
-                            MedicalCondition = "",
+                            MedicalCondition = "False",
                             Status           = DonationStatus.Confirmed,
                             CreatedAt        = DateTime.UtcNow.AddDays(-11),
                             ConfirmedAt      = DateTime.UtcNow.AddDays(-10),
@@ -467,7 +468,7 @@ namespace Persistence.Data
                             Age = 31, Weight = 82, HasTattoo = false,
                             LastDonationDate = DateTime.UtcNow.AddMonths(-6),
                             Address          = "October 6 City, Giza",
-                            MedicalCondition = "",
+                            MedicalCondition = "False",
                             Status           = DonationStatus.Confirmed,
                             CreatedAt        = DateTime.UtcNow.AddDays(-5),
                             ConfirmedAt      = DateTime.UtcNow.AddDays(-4),
@@ -482,7 +483,7 @@ namespace Persistence.Data
                             Age = 28, Weight = 78, HasTattoo = false,
                             LastDonationDate = DateTime.UtcNow.AddMonths(-6),
                             Address          = "Nasr City, Cairo",
-                            MedicalCondition = "",
+                            MedicalCondition = "False",
                             Status           = DonationStatus.Pending,
                             CreatedAt        = DateTime.UtcNow.AddDays(-3),
                             ConfirmedAt      = null,
@@ -496,7 +497,7 @@ namespace Persistence.Data
                             Age = 24, Weight = 58, HasTattoo = false,
                             LastDonationDate = null,
                             Address          = "Mohandessin, Giza",
-                            MedicalCondition = "Normal blood pressure",
+                            MedicalCondition = "False",   // no blocking medical condition
                             Status           = DonationStatus.Pending,
                             CreatedAt        = DateTime.UtcNow.AddDays(-1),
                             ConfirmedAt      = null,
@@ -510,7 +511,7 @@ namespace Persistence.Data
                             Age = 26, Weight = 62, HasTattoo = true,
                             LastDonationDate = DateTime.UtcNow.AddMonths(-7),
                             Address          = "Smouha, Alexandria",
-                            MedicalCondition = "",
+                            MedicalCondition = "False",
                             Status           = DonationStatus.Rejected,
                             CreatedAt        = DateTime.UtcNow.AddDays(-14),
                             ConfirmedAt      = null,
@@ -524,7 +525,7 @@ namespace Persistence.Data
                             Age = 22, Weight = 55, HasTattoo = false,
                             LastDonationDate = null,
                             Address          = "Cleopatra, Alexandria",
-                            MedicalCondition = "",
+                            MedicalCondition = "False",
                             Status           = DonationStatus.Pending,
                             CreatedAt        = DateTime.UtcNow.AddHours(-6),
                             ConfirmedAt      = null,
@@ -538,7 +539,7 @@ namespace Persistence.Data
                             Age = 27, Weight = 65, HasTattoo = false,
                             LastDonationDate = DateTime.UtcNow.AddMonths(-9),
                             Address          = "Heliopolis, Cairo",
-                            MedicalCondition = "",
+                            MedicalCondition = "False",
                             Status           = DonationStatus.Cancelled,
                             CreatedAt        = DateTime.UtcNow.AddDays(-22),
                             ConfirmedAt      = null,
@@ -552,7 +553,7 @@ namespace Persistence.Data
                             Age = 25, Weight = 60, HasTattoo = false,
                             LastDonationDate = DateTime.UtcNow.AddMonths(-3),
                             Address          = "Mansoura, Dakahlia",
-                            MedicalCondition = "",
+                            MedicalCondition = "False",
                             Status           = DonationStatus.Pending,
                             CreatedAt        = DateTime.UtcNow.AddHours(-2),
                             ConfirmedAt      = null,
@@ -580,9 +581,9 @@ namespace Persistence.Data
 
                     var scans = confirmed.Select((don, idx) => new DonationScan
                     {
-                        DonationId               = don.Id,
+                        DonationId = don.Id,
                         ScannedByHospitalAdminId = A(idx % adminIds.Count),
-                        ScanTime                 = don.ConfirmedAt ?? DateTime.UtcNow.AddDays(-1),
+                        ScanTime = don.ConfirmedAt ?? DateTime.UtcNow.AddDays(-1),
                     }).ToList();
 
                     if (scans.Any())
@@ -609,9 +610,10 @@ namespace Persistence.Data
 
                     var pickups = completed.Select((req, idx) => new PickupScan
                     {
-                        BloodRequestId  = req.Id,
-                        ScannedByUserId = D(idx % donorIds.Count),
-                        ScanTime        = req.NeededBy?.AddDays(-1) ?? DateTime.UtcNow.AddDays(-6),
+                        BloodRequestId = req.Id,
+                        // Must be the request owner — not a random donor
+                        ScannedByUserId = req.RequestedByUserId,
+                        ScanTime = req.NeededBy?.AddDays(-1) ?? DateTime.UtcNow.AddDays(-6),
                     }).ToList();
 
                     if (pickups.Any())
@@ -639,30 +641,30 @@ namespace Persistence.Data
                         if (donorIdx >= donorIds.Count) return;
                         userRewards.Add(new UserReward
                         {
-                            UserId     = donorIds[donorIdx],
-                            RewardId   = rewardId,
+                            UserId = donorIds[donorIdx],
+                            RewardId = rewardId,
                             PointsUsed = ptsUsed,
-                            Status     = status,
+                            Status = status,
                             RedeemedAt = DateTime.UtcNow.AddDays(-daysAgo),
                         });
                     }
 
                     // donor5  (300 pts) → Full Health Package      (250 pts)
-                    Add(4, R_FullHealthPackage,        250, UserRewardStatus.Used,   10);
+                    Add(4, R_FullHealthPackage, 250, UserRewardStatus.Used, 10);
                     // donor3  (200 pts) → Hospital Priority Service (200 pts)
-                    Add(2, R_HospitalPriorityService,  200, UserRewardStatus.Used,    5);
+                    Add(2, R_HospitalPriorityService, 200, UserRewardStatus.Used, 5);
                     // donor9  (225 pts) → Hospital Priority Service (200 pts)
-                    Add(8, R_HospitalPriorityService,  200, UserRewardStatus.Unused,  2);
+                    Add(8, R_HospitalPriorityService, 200, UserRewardStatus.Unused, 2);
                     // donor1  (150 pts) → Blood Test Package        (150 pts)
-                    Add(0, R_BloodTestPackage,         150, UserRewardStatus.Unused,  1);
+                    Add(0, R_BloodTestPackage, 150, UserRewardStatus.Unused, 1);
                     // donor2  (100 pts) → Pharmacy Discount         (100 pts)
-                    Add(1, R_PharmacyDiscount,         100, UserRewardStatus.Unused,  3);
+                    Add(1, R_PharmacyDiscount, 100, UserRewardStatus.Unused, 3);
                     // donor7  (125 pts) → Pharmacy Discount         (100 pts)
-                    Add(6, R_PharmacyDiscount,         100, UserRewardStatus.Used,    6);
+                    Add(6, R_PharmacyDiscount, 100, UserRewardStatus.Used, 6);
                     // donor10 ( 80 pts) → Free Medical Checkup      ( 50 pts)
-                    Add(9, R_FreeMedicalCheckup,        50, UserRewardStatus.Unused,  0);
+                    Add(9, R_FreeMedicalCheckup, 50, UserRewardStatus.Unused, 0);
                     // donor6  ( 75 pts) → Free Medical Checkup      ( 50 pts)
-                    Add(5, R_FreeMedicalCheckup,        50, UserRewardStatus.Used,    4);
+                    Add(5, R_FreeMedicalCheckup, 50, UserRewardStatus.Used, 4);
 
                     if (userRewards.Any())
                     {
@@ -674,6 +676,41 @@ namespace Persistence.Data
                 else
                 {
                     Console.WriteLine("⏭  UserRewards already seeded.");
+                }
+
+
+                // ═════════════════════════════════════════════════════════════
+                // 6b. BLOOD BAGS  (one per Confirmed donation — feeds inventory)
+                // ═════════════════════════════════════════════════════════════
+
+                if (!await context.BloodBags.AnyAsync())
+                {
+                    var confirmedForBags = await context.Donations
+                        .Where(d => d.Status == DonationStatus.Confirmed
+                                 && d.HospitalId != null)
+                        .ToListAsync();
+
+                    var bloodBags = confirmedForBags.Select(d => new BloodBag
+                    {
+                        DonationId = d.Id,
+                        HospitalId = d.HospitalId!.Value,
+                        BloodType = d.BloodType,
+                        Status = BloodBagStatus.Available,
+                        CreatedAt = d.ConfirmedAt ?? DateTime.UtcNow,
+                        // Standard blood-bank shelf life: 42 days from collection
+                        ExpiryDate = (d.ConfirmedAt ?? DateTime.UtcNow).AddDays(42),
+                    }).ToList();
+
+                    if (bloodBags.Any())
+                    {
+                        await context.BloodBags.AddRangeAsync(bloodBags);
+                        await context.SaveChangesAsync();
+                        Console.WriteLine($"✅ Seeded {bloodBags.Count} blood bags.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("⏭  BloodBags already seeded.");
                 }
 
                 // ═════════════════════════════════════════════════════════════
@@ -700,16 +737,16 @@ namespace Persistence.Data
                         logs.Add(new InventoryLog
                         {
                             HospitalInventoryId = inv.Id,
-                            HospitalId          = don.HospitalId!.Value,
-                            BloodType           = shortBT,
-                            DonationId          = don.Id,
-                            BloodRequestId      = null,
-                            ChangedByAdminId    = adminIds.Count > 0 ? adminIds[0] : null,
-                            Source              = "Donation",
-                            ChangeAmount        = 1,
-                            QuantityAfter       = inv.Quantity,
-                            Notes               = "Blood bag received from confirmed donation",
-                            ChangedAt           = don.ConfirmedAt ?? DateTime.UtcNow,
+                            HospitalId = don.HospitalId!.Value,
+                            BloodType = shortBT,
+                            DonationId = don.Id,
+                            BloodRequestId = null,
+                            ChangedByAdminId = adminIds.Count > 0 ? adminIds[0] : null,
+                            Source = "Donation",
+                            ChangeAmount = 1,
+                            QuantityAfter = inv.Quantity,
+                            Notes = "Blood bag received from confirmed donation",
+                            ChangedAt = don.ConfirmedAt ?? DateTime.UtcNow,
                         });
                     }
 
@@ -722,14 +759,14 @@ namespace Persistence.Data
                         logs.Add(new InventoryLog
                         {
                             HospitalInventoryId = invA.Id,
-                            HospitalId          = H_CairoUniversity,
-                            BloodType           = "O+",
-                            ChangedByAdminId    = A(0),
-                            Source              = "ManualAdjustment",
-                            ChangeAmount        = 10,
-                            QuantityAfter       = invA.Quantity + 10,
-                            Notes               = "External blood bank transfer received",
-                            ChangedAt           = DateTime.UtcNow.AddDays(-6),
+                            HospitalId = H_CairoUniversity,
+                            BloodType = "O+",
+                            ChangedByAdminId = A(0),
+                            Source = "ManualAdjustment",
+                            ChangeAmount = 10,
+                            QuantityAfter = invA.Quantity + 10,
+                            Notes = "External blood bank transfer received",
+                            ChangedAt = DateTime.UtcNow.AddDays(-6),
                         });
 
                     var invB = Inv(H_Oct6University, "A+");
@@ -737,14 +774,14 @@ namespace Persistence.Data
                         logs.Add(new InventoryLog
                         {
                             HospitalInventoryId = invB.Id,
-                            HospitalId          = H_Oct6University,
-                            BloodType           = "A+",
-                            ChangedByAdminId    = A(4),
-                            Source              = "ManualAdjustment",
-                            ChangeAmount        = 6,
-                            QuantityAfter       = invB.Quantity + 6,
-                            Notes               = "Initial stock entry upon hospital registration",
-                            ChangedAt           = DateTime.UtcNow.AddDays(-3),
+                            HospitalId = H_Oct6University,
+                            BloodType = "A+",
+                            ChangedByAdminId = A(4),
+                            Source = "ManualAdjustment",
+                            ChangeAmount = 6,
+                            QuantityAfter = invB.Quantity + 6,
+                            Notes = "Initial stock entry upon hospital registration",
+                            ChangedAt = DateTime.UtcNow.AddDays(-3),
                         });
 
                     if (logs.Any())
