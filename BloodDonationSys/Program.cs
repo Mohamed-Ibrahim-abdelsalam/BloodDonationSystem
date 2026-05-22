@@ -142,6 +142,7 @@ public class Program
         {
             await AuthDbContextSeed.SeedAsync(scope.ServiceProvider);
             await RewardDbSeed.SeedAsync(scope.ServiceProvider);
+            await MainDbSeed.SeedAsync(scope.ServiceProvider);
         }
 
 
