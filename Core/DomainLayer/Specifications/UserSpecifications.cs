@@ -103,4 +103,40 @@ namespace DomainLayer.Specifications
             AddInclude(d => d.DonorUser);
         }
     }
+
+
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // HOSPITAL ADMIN Specifications
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Fetches all users with Role == HospitalAdmin,
+    /// includes Hospital nav-prop for linked hospital data.
+    /// Ordered by CreatedAt DESC (newest first).
+    /// </summary>
+    public class AllHospitalAdminsSpecification : BaseSpecification<ApplicationUser>
+    {
+        public AllHospitalAdminsSpecification()
+        {
+            Criteria = u => u.Role == BloodDonationSystem.Enums.Role.HospitalAdmin;
+            AddInclude(u => u.Hospital);
+            ApplyOrderByDesc(u => u.CreatedAt);
+        }
+    }
+
+    /// <summary>
+    /// Fetch a single HospitalAdmin by Id, includes Hospital.
+    /// </summary>
+    public class HospitalAdminByIdSpecification : BaseSpecification<ApplicationUser>
+    {
+        public HospitalAdminByIdSpecification(string userId)
+        {
+            Criteria = u =>
+                u.Id == userId &&
+                u.Role == BloodDonationSystem.Enums.Role.HospitalAdmin;
+            AddInclude(u => u.Hospital);
+        }
+    }
 }

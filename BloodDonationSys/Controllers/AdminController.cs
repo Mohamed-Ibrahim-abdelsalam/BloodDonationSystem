@@ -14,11 +14,13 @@ namespace BloodDonationSystem.Controllers
     {
         private readonly IAdminService _service;
         private readonly IHospitalService _hospitalService;
+        private readonly IHospitalAdminService _hospitalAdminService;
 
-        public AdminController(IAdminService service, IHospitalService hospitalService)
+        public AdminController(IAdminService service, IHospitalService hospitalService, IHospitalAdminService hospitalAdminService)
         {
             _service = service;
             _hospitalService = hospitalService;
+            _hospitalAdminService = hospitalAdminService;
         }
 
         // ── GET /api/admin/requests?pageNumber=1&pageSize=5 ───────────────────
@@ -203,6 +205,107 @@ namespace BloodDonationSystem.Controllers
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+        }
+
+
+
+
+        // ══════════════════════════════════════════════════════════════════════
+        // Hospital Admin Management — AppAdmin only
+        // ══════════════════════════════════════════════════════════════════════
+
+        // ── POST /api/admin/hospital-admins ───────────────────────────────────
+        [HttpPost("hospital-admins")]
+        [Authorize(Roles = "AppAdmin")]
+        public async Task<IActionResult> CreateHospitalAdmin(
+            [FromBody] CreateHospitalAdminDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _hospitalAdminService.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetHospitalAdminById),
+                    new { id = result.Id }, result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ── GET /api/admin/hospital-admins ────────────────────────────────────
+        [HttpGet("hospital-admins")]
+        [Authorize(Roles = "AppAdmin")]
+        public async Task<IActionResult> GetHospitalAdmins()
+        {
+            var result = await _hospitalAdminService.GetAllAsync();
+            return Ok(result);
+        }
+
+        // ── GET /api/admin/hospital-admins/{id} ───────────────────────────────
+        [HttpGet("hospital-admins/{id}")]
+        [Authorize(Roles = "AppAdmin")]
+        public async Task<IActionResult> GetHospitalAdminById(string id)
+        {
+            try
+            {
+                var result = await _hospitalAdminService.GetByIdAsync(id);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        // ── PUT /api/admin/hospital-admins/{id} ───────────────────────────────
+        [HttpPut("hospital-admins/{id}")]
+        [Authorize(Roles = "AppAdmin")]
+        public async Task<IActionResult> UpdateHospitalAdmin(
+            string id, [FromBody] UpdateHospitalAdminDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _hospitalAdminService.UpdateAsync(id, dto);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ── DELETE /api/admin/hospital-admins/{id} ────────────────────────────
+        [HttpDelete("hospital-admins/{id}")]
+        [Authorize(Roles = "AppAdmin")]
+        public async Task<IActionResult> DeleteHospitalAdmin(string id)
+        {
+            try
+            {
+                await _hospitalAdminService.DeleteAsync(id);
+                return Ok(new { message = "Hospital Admin deleted successfully" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
         }
 
