@@ -132,6 +132,18 @@ public class Program
 
 
 
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowLocalDev", policy =>
+            {
+                policy
+                    .WithOrigins("http://localhost:4200")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
+
+
 
 
         var app = builder.Build();
@@ -153,6 +165,9 @@ public class Program
         
 
         app.UseHttpsRedirection();
+
+        app.UseCors("AllowLocalDev");
+
         app.UseAuthentication();
         app.UseAuthorization();
 
