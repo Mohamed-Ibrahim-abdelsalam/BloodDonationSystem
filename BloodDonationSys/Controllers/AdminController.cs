@@ -15,12 +15,14 @@ namespace BloodDonationSystem.Controllers
         private readonly IAdminService _service;
         private readonly IHospitalService _hospitalService;
         private readonly IHospitalAdminService _hospitalAdminService;
+        private readonly IRewardAdminService _rewardAdminService;
 
-        public AdminController(IAdminService service, IHospitalService hospitalService, IHospitalAdminService hospitalAdminService)
+        public AdminController(IAdminService service, IHospitalService hospitalService, IHospitalAdminService hospitalAdminService, IRewardAdminService rewardAdminService)
         {
             _service = service;
             _hospitalService = hospitalService;
             _hospitalAdminService = hospitalAdminService;
+            _rewardAdminService = rewardAdminService;
         }
 
         // ── GET /api/admin/requests?pageNumber=1&pageSize=5 ───────────────────
@@ -306,6 +308,71 @@ namespace BloodDonationSystem.Controllers
             catch (InvalidOperationException ex)
             {
                 return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+
+
+        // ══════════════════════════════════════════════════════════════════════
+        // Rewards Management — AppAdmin only
+        // ══════════════════════════════════════════════════════════════════════
+
+        // ── POST /api/admin/rewards ───────────────────────────────────────────
+        [HttpPost("rewards")]
+        [Authorize(Roles = "AppAdmin")]
+        public async Task<IActionResult> CreateReward([FromBody] CreateRewardDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _rewardAdminService.CreateAsync(dto);
+                return StatusCode(201, result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ── PUT /api/admin/rewards/{id} ───────────────────────────────────────
+        [HttpPut("rewards/{id:int}")]
+        [Authorize(Roles = "AppAdmin")]
+        public async Task<IActionResult> UpdateReward(int id, [FromBody] UpdateRewardDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _rewardAdminService.UpdateAsync(id, dto);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ── DELETE /api/admin/rewards/{id} ────────────────────────────────────
+        [HttpDelete("rewards/{id:int}")]
+        [Authorize(Roles = "AppAdmin")]
+        public async Task<IActionResult> DeleteReward(int id)
+        {
+            try
+            {
+                await _rewardAdminService.DeleteAsync(id);
+                return Ok(new { message = "Reward deleted successfully" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
             }
         }
 

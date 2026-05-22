@@ -58,4 +58,51 @@ namespace ServiceAbstraction.Dtos
         [Range(1, int.MaxValue)]
         public int RewardId { get; set; }
     }
+
+
+
+
+    // ── Admin Reward DTOs ─────────────────────────────────────────────────────
+
+    /// <summary>Body for POST /api/admin/rewards.</summary>
+    public class CreateRewardDto
+    {
+        [Required(ErrorMessage = "Title is required.")]
+        [MaxLength(150)]
+        public string Title { get; set; } = string.Empty;
+
+        [MaxLength(500)]
+        public string? Description { get; set; }
+
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "PointsRequired must be greater than 0.")]
+        public int PointsRequired { get; set; }
+    }
+
+    /// <summary>Body for PUT /api/admin/rewards/{id}.</summary>
+    public class UpdateRewardDto
+    {
+        [Required(ErrorMessage = "Title is required.")]
+        [MaxLength(150)]
+        public string Title { get; set; } = string.Empty;
+
+        [MaxLength(500)]
+        public string? Description { get; set; }
+
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "PointsRequired must be greater than 0.")]
+        public int PointsRequired { get; set; }
+    }
+
+    /// <summary>POST and PUT admin response.</summary>
+    public class AdminRewardDto
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public int PointsRequired { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        public string? Message { get; set; }
+    }
 }

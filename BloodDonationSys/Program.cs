@@ -83,6 +83,7 @@ public class Program
         builder.Services.AddScoped<IAdminService, AdminService>();
         builder.Services.AddScoped<IHospitalService, HospitalService>();
         builder.Services.AddScoped<IHospitalAdminService, HospitalAdminService>();
+        builder.Services.AddScoped<IRewardAdminService, RewardAdminService>();
         builder.Services.AddScoped<IHospitalInventoryService, HospitalInventoryService>();
         builder.Services.AddScoped<IAiMatchService, AiMatchService>();
         builder.Services.AddHttpClient<AiMatchService>(client =>
