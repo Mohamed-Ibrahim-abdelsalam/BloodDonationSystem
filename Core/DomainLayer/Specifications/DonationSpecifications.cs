@@ -30,15 +30,19 @@ namespace DomainLayer.Specifications
     /// </summary>
     public class DonationByIdSpecification : BaseSpecification<Donation>
     {
-        public DonationByIdSpecification(int id)
-        {
-            AddInclude(d => d.BloodRequest);
-            AddInclude(d => d.Hospital);
-            AddInclude(d => d.DonorUser);
-
-            Criteria = d => d.Id == id;
-        }
+            public DonationByIdSpecification(int id)
+            {
+                AddInclude(d => d.BloodRequest);
+                AddInclude(d => d.Hospital);
+                AddInclude(d => d.DonorUser);
+    
+                Criteria = d => d.Id == id;
+    
+                // Tracked — this entity is loaded for mutation (Status, ConfirmedAt, etc.)\n'
+               DisableReadOnly();
+           }
     }
+
 
     /// <summary>
     /// Check for duplicate donation (same user + same request)

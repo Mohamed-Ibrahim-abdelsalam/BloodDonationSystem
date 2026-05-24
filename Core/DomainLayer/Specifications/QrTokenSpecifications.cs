@@ -16,6 +16,7 @@ namespace DomainLayer.Specifications
         public QrTokenByValueSpecification(string token)
         {
             AddInclude(q => q.Donation);
+            DisableReadOnly(); // tracked — IsUsed is set to true after scan
             AddInclude(q => q.BloodRequest);
             Criteria = q => q.Token == token;
         }

@@ -53,12 +53,19 @@ namespace Service
                     "before using the matching feature.");
 
             // ── STEP 2: Fetch OPEN requests with optional pre-AI filters ──────
-            var spec = new OpenBloodRequestsForAiSpecification(
-                queryParams.BloodType,
-                queryParams.Priority,
-                queryParams.Search);
 
-            var requests = (await _uow.BloodRequests.GetAllWithSpecAsync(spec)).ToList();
+            var spec = new OpenBloodRequestsForAiSpecification(
+
+                   excludeUserId: userId,
+
+                   bloodType: queryParams.BloodType,
+
+                   priority: queryParams.Priority,
+
+                  search: queryParams.Search);
+
+
+           var requests = (await _uow.BloodRequests.GetAllWithSpecAsync(spec)).ToList();
 
             if (!requests.Any())
                 return new FrontendMatchResponseDto { Results = new List<FrontendMatchResultDto>() };
