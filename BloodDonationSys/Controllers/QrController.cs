@@ -82,36 +82,38 @@ namespace BloodDonationSystem.Controllers
             }
         }
 
-        // ── POST /api/requests/{id}/pickup-scan ───────────────────────────────
+   
+        // ── POST /api/requests/pickup-scan ────────────────────────────────────
+        // Target is identified entirely by the QR token — no route id needed
         // Case 1 — BloodRequest pickup   → User (owner) OR HospitalAdmin → Completed
         // Case 2 — General donation withdrawal → HospitalAdmin only → Withdrawn
-        [HttpPost("{id:int}/pickup-scan")]
-        [Authorize(Roles = "User,HospitalAdmin")]
-        public async Task<IActionResult> ScanPickupQr(int id, [FromBody] ScanQrDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            try
-            {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-                var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
-                var result = await _qrService.ScanPickupQrAsync(id, dto.QrToken, userId, userRole);
-                return Ok(result);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return StatusCode(403, new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
+                [HttpPost("pickup-scan")]
+                [Authorize(Roles = "User,HospitalAdmin")]
+              public async Task<IActionResult> ScanPickupQr([FromBody] ScanQrDto dto)
+               {
+                  if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+        
+                try
+                {
+                      var userId   = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+                      var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+                      var result   = await _qrService.ScanPickupQrAsync(dto.QrToken, userId, userRole);
+                       return Ok(result);
+                }
+                   catch (KeyNotFoundException ex)
+                {
+                      return NotFound(new { message = ex.Message });
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        return StatusCode(403, new { message = ex.Message });
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        return BadRequest(new { message = ex.Message });
+                    }
+                }
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -159,29 +161,35 @@ namespace BloodDonationSystem.Controllers
 
 
 
-        // ── POST /api/hospital/donations/{id}/scan ────────────────────────────
-        [HttpPost("donations/{id:int}/scan")]
-        [Authorize(Roles = "HospitalAdmin")]
-        public async Task<IActionResult> ScanDonationQr(int id, [FromBody] ScanQrDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            try
-            {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-                var result = await _qrService.ScanDonationQrAsync(id, dto.QrToken, userId);
-                return Ok(result);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
+       
+        // ── POST /api/hospital/donations/scan ─────────────────────────────────
+             // Donation is identified by the QR token — no route id needed\n'
+                [HttpPost("donations/scan")]
+                [Authorize(Roles = "HospitalAdmin")]
+                public async Task<IActionResult> ScanDonationQr([FromBody] ScanQrDto dto)
+                {
+                    if (!ModelState.IsValid)
+                        return BadRequest(ModelState);
+        
+                    try
+                    {
+                        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+                        var result = await _qrService.ScanDonationQrAsync(dto.QrToken, userId);
+                        return Ok(result);
+                    }
+                    catch (KeyNotFoundException ex)
+                    {
+                        return NotFound(new { message = ex.Message });
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        return StatusCode(403, new { message = ex.Message });
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        return BadRequest(new { message = ex.Message });
+                    }
+                }
 
 
 

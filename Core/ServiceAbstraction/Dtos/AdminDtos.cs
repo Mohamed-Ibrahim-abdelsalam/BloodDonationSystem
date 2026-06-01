@@ -82,6 +82,8 @@ namespace ServiceAbstraction.Dtos
         public string DonorName { get; set; } = string.Empty;
         public string BloodType { get; set; } = string.Empty;
 
+        public int? BloodRequestId { get; set; }
+
         /// <summary>
         /// Quantity from the linked BloodRequest, or 1 for general donations.
         /// </summary>

@@ -18,7 +18,7 @@ namespace ServiceAbstraction.Dtos
     }
 
     // ── Input DTOs ────────────────────────────────────────────────────────────
-
+    
     /// <summary>Body for POST /api/admin/hospital-admins.</summary>
     public class CreateHospitalAdminDto
     {

@@ -177,7 +177,7 @@ namespace Service
 
         // ── POST /api/hospital/donations/{id}/scan ────────────────────────────
         public async Task<DonationScanResponseDto> ScanDonationQrAsync(
-            int donationId, string qrToken, string hospitalAdminId)
+            string qrToken, string hospitalAdminId)
         {
             var tokenSpec = new QrTokenByValueSpecification(qrToken);
             var token = await _uow.QrTokens.GetEntityWithSpecAsync(tokenSpec);
@@ -207,8 +207,11 @@ namespace Service
                 throw new InvalidOperationException("QR token has already been used.");
 
             // 400 — token doesn't match route id
-            if (token.DonationId != donationId)
-                throw new InvalidOperationException("QR token does not match the provided donation ID.");
+            // Extract donationId from the token itself — no route id needed\n'
+             if (!token.DonationId.HasValue)
+                throw new InvalidOperationException("QR token is not linked to any donation.");
+    
+                var donationId = token.DonationId.Value;
 
             // Mark token as used
             token.IsUsed = true;
@@ -298,7 +301,7 @@ namespace Service
         //            → HospitalAdmin only
         //            → Donation.Status = Withdrawn
         public async Task<PickupScanResponseDto> ScanPickupQrAsync(
-            int requestId, string qrToken, string userId, string userRole)
+             string qrToken, string userId, string userRole)
         {
             // ── 1. Validate QR token ──────────────────────────────────────────
             var tokenSpec = new QrTokenByValueSpecification(qrToken);

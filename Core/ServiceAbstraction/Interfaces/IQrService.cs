@@ -19,10 +19,10 @@ namespace ServiceAbstraction.Interfaces
         Task<QrTokenResponseDto> GenerateGeneralDonationPickupQrAsync(int donationId, string hospitalAdminId);
 
         // Hospital scans donation QR → confirms receiving blood from donor
-        Task<DonationScanResponseDto> ScanDonationQrAsync(int donationId, string qrToken, string hospitalAdminId);
+        Task<DonationScanResponseDto> ScanDonationQrAsync(string qrToken, string hospitalAdminId);
 
         // User or HospitalAdmin scans pickup QR\n'
          // Case 1 (BloodRequest) → Completed | Case 2 (General Donation) → Withdrawn\n'
-       Task<PickupScanResponseDto> ScanPickupQrAsync(int requestId, string qrToken, string userId, string userRole);
+       Task<PickupScanResponseDto> ScanPickupQrAsync(string qrToken, string userId, string userRole);
     }
 }
