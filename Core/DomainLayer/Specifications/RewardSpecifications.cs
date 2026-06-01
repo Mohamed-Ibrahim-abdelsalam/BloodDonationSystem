@@ -72,4 +72,34 @@ namespace DomainLayer.Specifications
         }
     }
 
+
+
+    /// <summary>
+    /// Fetch a single UserReward by Id with Reward and User navigation properties.
+    /// DisableReadOnly() — loaded for Status mutation on scan.
+    /// </summary>
+    public class UserRewardByIdSpecification : BaseSpecification<UserReward>
+    {
+        public UserRewardByIdSpecification(int id)
+        {
+            Criteria = ur => ur.Id == id;
+            AddInclude(ur => ur.Reward);
+            AddInclude(ur => ur.User);
+            DisableReadOnly();
+        }
+    }
+
+    /// <summary>
+    /// Fetch a single UserReward by Id for the QR generation — read-only with includes.
+    /// </summary>
+    public class UserRewardByIdReadSpecification : BaseSpecification<UserReward>
+    {
+        public UserRewardByIdReadSpecification(int id)
+        {
+            Criteria = ur => ur.Id == id;
+            AddInclude(ur => ur.Reward);
+            AddInclude(ur => ur.User);
+        }
+    }
+
 }

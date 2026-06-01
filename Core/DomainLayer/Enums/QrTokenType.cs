@@ -3,6 +3,7 @@ namespace BloodDonationSystem.Enums
     public enum QrTokenType
     {
         Donation,
-        Pickup
+        Pickup,
+        Reward
     }
 }

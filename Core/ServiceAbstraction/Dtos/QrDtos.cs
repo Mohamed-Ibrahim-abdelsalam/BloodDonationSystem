@@ -40,4 +40,26 @@ namespace ServiceAbstraction.Dtos
         [Required]
         public string QrToken { get; set; } = string.Empty;
     }
+
+
+
+    /// <summary>GET /api/rewards/redemptions/{id}/qr response.</summary>
+    public class RewardQrResponseDto
+    {
+        public string QrToken { get; set; } = string.Empty;
+        public string QrType { get; set; } = "Reward";
+        public int ReferenceId { get; set; }    // UserReward.Id
+        public DateTime ExpiresAt { get; set; }
+    }
+
+    /// <summary>POST /api/hospital/rewards/scan response.</summary>
+    public class RewardScanResponseDto
+    {
+        public int RewardRedemptionId { get; set; }
+        public string RewardTitle { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public DateTime? UsedAt { get; set; }
+        public string Message { get; set; } = string.Empty;
+    }
 }

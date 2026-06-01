@@ -31,5 +31,8 @@ namespace BloodDonationSystem.Models
 
         public int? BloodRequestId { get; set; }
         public BloodRequest? BloodRequest { get; set; }
+
+        public int? UserRewardId { get; set; }
+        public UserReward? UserReward { get; set; }
     }
 }

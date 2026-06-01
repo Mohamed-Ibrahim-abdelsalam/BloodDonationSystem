@@ -69,4 +69,22 @@ namespace DomainLayer.Specifications
                 t.ExpiryDate > DateTime.UtcNow;
         }
     }
+
+
+
+    /// <summary>
+    /// Find an active (not used, not expired) Reward QR linked to a UserReward.
+    /// Used when generating reward QR to return existing valid token.
+    /// </summary>
+    public class ActiveRewardQrSpecification : BaseSpecification<QrToken>
+    {
+        public ActiveRewardQrSpecification(int userRewardId)
+        {
+            Criteria = t =>
+                t.UserRewardId == userRewardId &&
+                t.Type == QrTokenType.Reward &&
+                !t.IsUsed &&
+                t.ExpiryDate > DateTime.UtcNow;
+        }
+    }
 }

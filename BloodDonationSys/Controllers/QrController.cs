@@ -195,4 +195,68 @@ namespace BloodDonationSystem.Controllers
 
 
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Reward QR endpoints
+    // ═══════════════════════════════════════════════════════════════════════
+    [ApiController]
+    [Authorize]
+    public class RewardQrController : ControllerBase
+    {
+        private readonly IQrService _qrService;
+
+        public RewardQrController(IQrService qrService)
+        {
+            _qrService = qrService;
+        }
+
+        // ── GET /api/rewards/redemptions/{id}/qr ─────────────────────────────
+        /// <summary>Generate a QR token for a redeemed reward (Unused status only).</summary>
+        [HttpGet("api/rewards/redemptions/{id:int}/qr")]
+        public async Task<IActionResult> GenerateRewardQr(int id)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+                var result = await _qrService.GenerateRewardQrAsync(id, userId);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ── POST /api/hospital/rewards/scan ───────────────────────────────────
+        /// <summary>Hospital Admin scans reward QR — marks redemption as Used.</summary>
+        [HttpPost("api/hospital/rewards/scan")]
+        [Authorize(Roles = "HospitalAdmin")]
+        public async Task<IActionResult> ScanRewardQr([FromBody] ScanQrDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _qrService.ScanRewardQrAsync(dto.QrToken);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+    }
 }

@@ -29,6 +29,8 @@ namespace BloodDonationSystem.Models
         public UserRewardStatus Status { get; set; } = UserRewardStatus.Unused;
 
         public DateTime RedeemedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UsedAt { get; set; }
+
 
     }
 }

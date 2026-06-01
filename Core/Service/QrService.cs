@@ -403,7 +403,112 @@ namespace Service
                 "QR token is not linked to any blood request or donation.");
         }
 
+
+        // ── GET /api/rewards/redemptions/{id}/qr ─────────────────────────────
+        public async Task<RewardQrResponseDto> GenerateRewardQrAsync(
+            int userRewardId, string userId)
+        {
+            // Validate redemption exists and belongs to current user
+            var spec = new UserRewardByIdReadSpecification(userRewardId);
+            var userReward = await _uow.UserRewards.GetEntityWithSpecAsync(spec)
+                ?? throw new KeyNotFoundException(
+                    $"Reward redemption with id {userRewardId} was not found.");
+
+            // 403 — only the owner can generate the QR
+            if (userReward.UserId != userId)
+                throw new UnauthorizedAccessException(
+                    "You are not authorized to generate a QR for this redemption.");
+
+            // 400 — already used redemptions cannot be QR'd again
+            if (userReward.Status == UserRewardStatus.Used)
+                throw new InvalidOperationException(
+                    "This reward has already been redeemed and cannot generate a new QR.");
+
+            // Return existing active token if still valid
+            var existingSpec = new ActiveRewardQrSpecification(userRewardId);
+            var existingToken = await _uow.QrTokens.GetEntityWithSpecAsync(existingSpec);
+            if (existingToken is not null)
+                return MapToRewardQrResponse(existingToken, userRewardId);
+
+            // Generate new secure token
+            var qrToken = new QrToken
+            {
+                Token = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N"),
+                Type = QrTokenType.Reward,
+                UserRewardId = userRewardId,
+                ExpiryDate = DateTime.UtcNow.AddMinutes(QrExpiryMinutes),
+                IsUsed = false,
+                CreatedAt = DateTime.UtcNow,
+            };
+
+            await _uow.QrTokens.AddAsync(qrToken);
+            await _uow.SaveChangesAsync();
+
+            return MapToRewardQrResponse(qrToken, userRewardId);
+        }
+
+        // ── POST /api/hospital/rewards/scan ───────────────────────────────────
+        public async Task<RewardScanResponseDto> ScanRewardQrAsync(string qrToken)
+        {
+            // Validate token
+            var tokenSpec = new QrTokenByValueSpecification(qrToken);
+            var token = await _uow.QrTokens.GetEntityWithSpecAsync(tokenSpec)
+                ?? throw new KeyNotFoundException("QR token not found.");
+
+            if (token.Type != QrTokenType.Reward)
+                throw new InvalidOperationException(
+                    "Invalid QR token type. Expected a Reward QR.");
+
+            if (token.ExpiryDate < DateTime.UtcNow)
+                throw new InvalidOperationException("QR token has expired.");
+
+            if (token.IsUsed)
+                throw new InvalidOperationException("QR token has already been used.");
+
+            if (!token.UserRewardId.HasValue)
+                throw new InvalidOperationException(
+                    "QR token is not linked to any reward redemption.");
+
+            // Load redemption with Reward and User
+            var spec = new UserRewardByIdSpecification(token.UserRewardId.Value);
+            var userReward = await _uow.UserRewards.GetEntityWithSpecAsync(spec)
+                ?? throw new KeyNotFoundException(
+                    $"Reward redemption with id {token.UserRewardId.Value} was not found.");
+
+            var now = DateTime.UtcNow;
+
+            // Mark redemption as Used
+            userReward.Status = UserRewardStatus.Used;
+            userReward.UsedAt = now;
+            _uow.UserRewards.Update(userReward);
+
+            // Mark token as used
+            token.IsUsed = true;
+            _uow.QrTokens.Update(token);
+
+            await _uow.SaveChangesAsync();
+
+            return new RewardScanResponseDto
+            {
+                RewardRedemptionId = userReward.Id,
+                RewardTitle = userReward.Reward?.Title ?? string.Empty,
+                UserName = userReward.User?.FullName ?? string.Empty,
+                Status = UserRewardStatus.Used.ToString(),
+                UsedAt = now,
+                Message = "Reward redeemed successfully",
+            };
+         }
+
         // ── Helpers ───────────────────────────────────────────────────────────
+
+        private static RewardQrResponseDto MapToRewardQrResponse(QrToken token, int userRewardId)
+             => new()
+            {
+                    QrToken     = token.Token,
+                    QrType      = QrTokenType.Reward.ToString(),
+                    ReferenceId = userRewardId,
+                    ExpiresAt   = token.ExpiryDate,
+            };
         private static QrTokenResponseDto MapToQrResponse(QrToken token, int referenceId)
             => new QrTokenResponseDto
             {
