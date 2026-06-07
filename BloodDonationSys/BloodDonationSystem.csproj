@@ -21,4 +21,19 @@
     <ProjectReference Include="..\Infrastructure\Presentation\Presentation.csproj" />
   </ItemGroup>
 
+	<ItemGroup>
+		<!-- Copy seed JSON files to output directory -->
+		<None Update="SeedData\blood_bags_seed.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+
+		<None Update="SeedData\requests_seed.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+
+		<None Update="SeedData\donations_seed.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
 </Project>

@@ -18,13 +18,13 @@ namespace Persistence.Data
     {
         public static async Task SeedAsync(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+               UserManager<ApplicationUser> userManager,
+                string contentRootPath)
         {
-            try
-            {
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                var seedDir = Path.GetDirectoryName(
-                    typeof(RequestsDonationsJsonSeed).Assembly.Location)!;
+                try
+                {
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var seedDir = Path.Combine(contentRootPath, "SeedData");
 
                 // ── 1. BLOOD REQUESTS ─────────────────────────────────────────
                 if (!await context.BloodRequests.AnyAsync())
@@ -71,66 +71,86 @@ namespace Persistence.Data
                         }).ToList();
 
                     await context.BloodRequests.AddRangeAsync(requests);
-                    await context.SaveChangesAsync();
-                    Console.WriteLine($"✅ Seeded {requests.Count} blood requests.");
-                }
-                else
-                {
-                    Console.WriteLine("⏭  BloodRequests already seeded.");
-                }
-
-                // ── 2. DONATIONS ──────────────────────────────────────────────
-                if (!await context.Donations.AnyAsync())
-                {
-                    var donPath = Path.Combine(seedDir, "donations_seed.json");
-                    Console.WriteLine($"📂 Donations path: {donPath}");
-
-                    if (!File.Exists(donPath))
-                    {
-                        Console.WriteLine($"❌ File not found: {donPath}");
-                        return;
+                        await context.SaveChangesAsync();
+                        Console.WriteLine($"✅ Seeded {requests.Count} blood requests.");
                     }
-
-                    var donJson = await File.ReadAllTextAsync(donPath);
-                    var donPayload = JsonSerializer.Deserialize<DonationSeedPayload>(donJson, options)
-                        ?? throw new InvalidOperationException("Failed to parse donations_seed.json.");
-
-                    var donEmailToId = await ResolveEmailsAsync(userManager,
-                        donPayload.Donations.Select(d => d.DonorEmail));
-
-                    if (donEmailToId.Count == 0)
+                    else
                     {
-                        Console.WriteLine("❌ No users found — Donations skipped.");
-                        return;
+                        Console.WriteLine("⏭  BloodRequests already seeded.");
                     }
-
-                    var donations = donPayload.Donations
-                        .Where(d => donEmailToId.ContainsKey(d.DonorEmail))
-                        .Select(d => new Donation
+    
+                    // ── Build JsonIndex → actual DB Id map for BloodRequests ──\n'
+                    // JSON uses sequential Ids (1-40), DB auto-assigns real Ids.\n'
+                    // We load all requests ordered by CreatedAt to map them.\n'
+                    var dbRequests = await context.BloodRequests
+                        .OrderBy(r => r.CreatedAt)
+                        .ToListAsync();
+    
+                    // Map: JSON position (1-based) → actual DB Id
+                   var jsonIndexToDbId = new Dictionary<int, int>();
+                   for (int i = 0; i < dbRequests.Count && i < 40; i++)
+                        jsonIndexToDbId[i + 1] = dbRequests[i].Id;
+    
+                    Console.WriteLine($"📋 Mapped {jsonIndexToDbId.Count} request IDs.");
+    
+                    // ── 2. DONATIONS ──────────────────────────────────────────
+                    if (!await context.Donations.AnyAsync())
+                   {
+                        var donPath = Path.Combine(seedDir, "donations_seed.json");
+                        Console.WriteLine($"📂 Donations path: {donPath}");
+    
+                        if (!File.Exists(donPath))
                         {
-                            DonorUserId = donEmailToId[d.DonorEmail],
-                            BloodRequestId = d.BloodRequestId,
-                            HospitalId = d.HospitalId,
-                            BloodType = (BloodType)d.BloodType,
-                            Age = d.Age,
-                            Weight = d.Weight,
-                            HasTattoo = d.HasTattoo,
-                            LastDonationDate = d.LastDonationDate,
-                            Address = d.Address,
-                            MedicalCondition = d.MedicalCondition,
-                            Status = (DonationStatus)d.Status,
-                            CreatedAt = d.CreatedAt,
-                            ConfirmedAt = d.ConfirmedAt,
-                        }).ToList();
-
-                    await context.Donations.AddRangeAsync(donations);
-                    await context.SaveChangesAsync();
-                    Console.WriteLine($"✅ Seeded {donations.Count} donations.");
-                }
-                else
-                {
+                            Console.WriteLine($"❌ File not found: {donPath}");
+                            return;
+                        }
+    
+                        var donJson    = await File.ReadAllTextAsync(donPath);
+                        var donPayload = JsonSerializer.Deserialize<DonationSeedPayload>(donJson, options)
+                            ?? throw new InvalidOperationException("Failed to parse donations_seed.json.");
+    
+                        var donEmailToId = await ResolveEmailsAsync(userManager,
+                            donPayload.Donations.Select(d => d.DonorEmail));
+    
+                        if (donEmailToId.Count == 0)
+                        {
+                            Console.WriteLine("❌ No users found — Donations skipped.");
+                            return;
+                        }
+    
+                        var donations = donPayload.Donations
+                            .Where(d => donEmailToId.ContainsKey(d.DonorEmail))
+                            .Select(d => new Donation
+                            {
+                                DonorUserId      = donEmailToId[d.DonorEmail],
+                               // Resolve JSON BloodRequestId → actual DB Id
+                               BloodRequestId   = d.BloodRequestId.HasValue &&
+                                                   jsonIndexToDbId.ContainsKey(d.BloodRequestId.Value)
+                                                   ? jsonIndexToDbId[d.BloodRequestId.Value]
+                                                   : (int?)null,
+                                HospitalId       = d.HospitalId,
+                                BloodType        = (BloodType)d.BloodType,
+                                Age              = d.Age,
+                                Weight           = d.Weight,
+                                HasTattoo        = d.HasTattoo,
+                                LastDonationDate = d.LastDonationDate,
+                                Address          = d.Address,
+                                MedicalCondition = d.MedicalCondition,
+                                Status           = (DonationStatus)d.Status,
+                                CreatedAt        = d.CreatedAt,
+                                ConfirmedAt      = d.ConfirmedAt,
+                           }).ToList();
+    
+                        await context.Donations.AddRangeAsync(donations);
+                        await context.SaveChangesAsync();
+                        Console.WriteLine($"✅ Seeded {donations.Count} donations.");
+                    }
+                    else
+                    {
                     Console.WriteLine("⏭  Donations already seeded.");
-                }
+                    }
+
+
             }
             catch (Exception ex)
             {

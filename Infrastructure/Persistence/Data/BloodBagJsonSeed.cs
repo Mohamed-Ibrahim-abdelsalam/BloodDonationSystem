@@ -15,20 +15,17 @@ namespace Persistence.Data
 {
     public static class BloodBagJsonSeed
     {
-        public static async Task SeedAsync(ApplicationDbContext context)
+        public static async Task SeedAsync(ApplicationDbContext context, string contentRootPath)
         {
-            try
-            {
+                try
+                {
                     if (await context.BloodBags.AnyAsync())
                     {
                         Console.WriteLine("⏭  BloodBags already seeded.");
                         return;
                     }
     
-                var seedDir  = Path.GetDirectoryName(
-                        typeof(BloodBagJsonSeed).Assembly.Location)!;
-                var filePath = Path.Combine(seedDir, "blood_bags_seed.json");
-                Console.WriteLine($"📂 Loading blood bags from: {filePath}");
+                  var filePath = Path.Combine(contentRootPath, "SeedData", "blood_bags_seed.json");
 
                 if (!File.Exists(filePath))
                 {
@@ -47,9 +44,26 @@ namespace Persistence.Data
                     return;
                 }
 
+                var dbDonations = await context.Donations
+                    .OrderBy(d => d.CreatedAt)
+                    .Select(d => d.Id)
+                    .ToListAsync();
+
+                var donIdMap = new Dictionary<int, int>();
+
+                for (int i = 0; i < dbDonations.Count && i < payload.BloodBags.Count; i++)
+                {
+                    donIdMap[i + 1] = dbDonations[i];
+                }
+
+                Console.WriteLine($"📋 Mapped {donIdMap.Count} donation IDs.");
+
+
                 var bags = payload.BloodBags.Select(r => new BloodBag
                 {
-                    DonationId = r.DonationId,
+                    DonationId = donIdMap.ContainsKey(r.DonationId)
+                          ? donIdMap[r.DonationId]
+                          : r.DonationId,
                     HospitalId = r.HospitalId,
                     BloodType = (BloodDonationSystem.Enums.BloodType)r.BloodType,
                     Status = (BloodBagStatus)r.Status,

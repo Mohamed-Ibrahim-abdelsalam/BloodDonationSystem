@@ -10,21 +10,6 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.26" />
   </ItemGroup>
 
-	<ItemGroup>
-		<!-- Seed JSON files -->
-		<Content Include="Data\blood_bags_seed.json">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
-
-		<Content Include="Data\requests_seed.json">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
-
-		<Content Include="Data\donations_seed.json">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
-	</ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\Core\DomainLayer\DomainLayer.csproj" />
     <ProjectReference Include="..\..\Core\Service\Service.csproj" />

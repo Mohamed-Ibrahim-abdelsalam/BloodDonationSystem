@@ -173,12 +173,14 @@ public class Program
             await RewardDbSeed.SeedAsync(scope.ServiceProvider);
             await MainDbSeed.SeedAsync(scope.ServiceProvider);
 
-            // Seed requests, donations, and blood bags from JSON files\n'
-            await RequestsDonationsJsonSeed.SeedAsync(
-                  scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(),
-                  scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>());
-            await BloodBagJsonSeed.SeedAsync(
-                  scope.ServiceProvider.GetRequiredService<ApplicationDbContext>());
+            var contentRoot = app.Environment.ContentRootPath;
+                await RequestsDonationsJsonSeed.SeedAsync(
+                    scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(),
+                    scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>(),
+                    contentRoot);
+                await BloodBagJsonSeed.SeedAsync(
+                    scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(),
+                    contentRoot);
         }
 
         
