@@ -13,5 +13,7 @@ namespace ServiceAbstraction.Dtos
         public string Message { get; set; } = string.Empty;
         public bool IsRead { get; set; }
         public DateTime CreatedAt { get; set; }
+        public int? ReferenceId { get; set; }
+        public string? ReferenceType { get; set; }
     }
 }

@@ -10,6 +10,15 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.26" />
   </ItemGroup>
 
+	<ItemGroup>
+		
+		    <!-- Blood bags seed data — read at startup -->
+		    <EmbeddedResource Include="Data\\blood_bags_seed.json" />
+		    <EmbeddedResource Include="Data\\requests_seed.json" />
+		    <EmbeddedResource Include="Data\\donations_seed.json" />
+		
+	</ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\Core\DomainLayer\DomainLayer.csproj" />
     <ProjectReference Include="..\..\Core\Service\Service.csproj" />
