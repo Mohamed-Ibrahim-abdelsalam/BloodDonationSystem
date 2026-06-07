@@ -172,11 +172,19 @@ public class Program
             await AuthDbContextSeed.SeedAsync(scope.ServiceProvider);
             await RewardDbSeed.SeedAsync(scope.ServiceProvider);
             await MainDbSeed.SeedAsync(scope.ServiceProvider);
+
+            // Seed requests, donations, and blood bags from JSON files\n'
+            await RequestsDonationsJsonSeed.SeedAsync(
+                  scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(),
+                  scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>());
+            await BloodBagJsonSeed.SeedAsync(
+                  scope.ServiceProvider.GetRequiredService<ApplicationDbContext>());
         }
 
+        
 
         // Configure the HTTP request pipeline.
-        
+
             app.UseSwagger();
             app.UseSwaggerUI();
         

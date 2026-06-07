@@ -16,32 +16,40 @@ namespace Persistence.Data
 {
     public static class RequestsDonationsJsonSeed
     {
-        private const string RequestsResource = "Persistence.Data.requests_seed.json";
-        private const string DonationsResource = "Persistence.Data.donations_seed.json";
-
         public static async Task SeedAsync(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager)
         {
             try
             {
-                var assembly = Assembly.GetExecutingAssembly();
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var seedDir = Path.GetDirectoryName(
+                    typeof(RequestsDonationsJsonSeed).Assembly.Location)!;
 
                 // ── 1. BLOOD REQUESTS ─────────────────────────────────────────
                 if (!await context.BloodRequests.AnyAsync())
                 {
-                    using var reqStream = assembly.GetManifestResourceStream(RequestsResource)
-                        ?? throw new FileNotFoundException($"'{RequestsResource}' not found.");
+                    var reqPath = Path.Combine(seedDir, "requests_seed.json");
+                    Console.WriteLine($"📂 Requests path: {reqPath}");
 
-                    var reqPayload = await JsonSerializer
-                        .DeserializeAsync<RequestSeedPayload>(reqStream, options)
+                    if (!File.Exists(reqPath))
+                    {
+                        Console.WriteLine($"❌ File not found: {reqPath}");
+                        return;
+                    }
+
+                    var reqJson = await File.ReadAllTextAsync(reqPath);
+                    var reqPayload = JsonSerializer.Deserialize<RequestSeedPayload>(reqJson, options)
                         ?? throw new InvalidOperationException("Failed to parse requests_seed.json.");
 
-                    // Resolve email → userId
-                    var reqEmailToId = await ResolveEmailsAsync(
-                        userManager,
+                    var reqEmailToId = await ResolveEmailsAsync(userManager,
                         reqPayload.BloodRequests.Select(r => r.RequestedByEmail));
+
+                    if (reqEmailToId.Count == 0)
+                    {
+                        Console.WriteLine("❌ No users found — BloodRequests skipped.");
+                        return;
+                    }
 
                     var requests = reqPayload.BloodRequests
                         .Where(r => reqEmailToId.ContainsKey(r.RequestedByEmail))
@@ -64,7 +72,7 @@ namespace Persistence.Data
 
                     await context.BloodRequests.AddRangeAsync(requests);
                     await context.SaveChangesAsync();
-                    Console.WriteLine($"✅ Seeded {requests.Count} blood requests from JSON.");
+                    Console.WriteLine($"✅ Seeded {requests.Count} blood requests.");
                 }
                 else
                 {
@@ -74,17 +82,27 @@ namespace Persistence.Data
                 // ── 2. DONATIONS ──────────────────────────────────────────────
                 if (!await context.Donations.AnyAsync())
                 {
-                    using var donStream = assembly.GetManifestResourceStream(DonationsResource)
-                        ?? throw new FileNotFoundException($"'{DonationsResource}' not found.");
+                    var donPath = Path.Combine(seedDir, "donations_seed.json");
+                    Console.WriteLine($"📂 Donations path: {donPath}");
 
-                    var donPayload = await JsonSerializer
-                        .DeserializeAsync<DonationSeedPayload>(donStream, options)
+                    if (!File.Exists(donPath))
+                    {
+                        Console.WriteLine($"❌ File not found: {donPath}");
+                        return;
+                    }
+
+                    var donJson = await File.ReadAllTextAsync(donPath);
+                    var donPayload = JsonSerializer.Deserialize<DonationSeedPayload>(donJson, options)
                         ?? throw new InvalidOperationException("Failed to parse donations_seed.json.");
 
-                    // Resolve email → userId
-                    var donEmailToId = await ResolveEmailsAsync(
-                        userManager,
+                    var donEmailToId = await ResolveEmailsAsync(userManager,
                         donPayload.Donations.Select(d => d.DonorEmail));
+
+                    if (donEmailToId.Count == 0)
+                    {
+                        Console.WriteLine("❌ No users found — Donations skipped.");
+                        return;
+                    }
 
                     var donations = donPayload.Donations
                         .Where(d => donEmailToId.ContainsKey(d.DonorEmail))
@@ -107,7 +125,7 @@ namespace Persistence.Data
 
                     await context.Donations.AddRangeAsync(donations);
                     await context.SaveChangesAsync();
-                    Console.WriteLine($"✅ Seeded {donations.Count} donations from JSON.");
+                    Console.WriteLine($"✅ Seeded {donations.Count} donations.");
                 }
                 else
                 {
@@ -116,13 +134,13 @@ namespace Persistence.Data
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Requests/Donations seeding failed: {ex.Message}");
+                Console.WriteLine($"❌ RequestsDonationsJsonSeed failed: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
                 throw;
             }
         }
 
         // ── Helper ────────────────────────────────────────────────────────────
-
         private static async Task<Dictionary<string, string>> ResolveEmailsAsync(
             UserManager<ApplicationUser> userManager,
             IEnumerable<string> emails)
@@ -134,13 +152,13 @@ namespace Persistence.Data
                 if (user is not null)
                     map[email] = user.Id;
                 else
-                    Console.WriteLine($"⚠️  User '{email}' not found — rows skipped.");
+                    Console.WriteLine($"  ⚠️  User not found: {email}");
             }
+            Console.WriteLine($"  ✅ Resolved {map.Count} users.");
             return map;
         }
 
         // ── JSON DTOs ─────────────────────────────────────────────────────────
-
         private class RequestSeedPayload
         {
             [JsonPropertyName("BloodRequests")]

@@ -11,12 +11,18 @@
   </ItemGroup>
 
 	<ItemGroup>
-		
-		    <!-- Blood bags seed data — read at startup -->
-		    <EmbeddedResource Include="Data\\blood_bags_seed.json" />
-		    <EmbeddedResource Include="Data\\requests_seed.json" />
-		    <EmbeddedResource Include="Data\\donations_seed.json" />
-		
+		<!-- Seed JSON files -->
+		<Content Include="Data\blood_bags_seed.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+
+		<Content Include="Data\requests_seed.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+
+		<Content Include="Data\donations_seed.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
 	</ItemGroup>
 
   <ItemGroup>

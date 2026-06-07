@@ -1,8 +1,8 @@
 using BloodDonationSystem.Data;
 using BloodDonationSystem.Enums;
 using BloodDonationSystem.Models;
-using DomainLayer.Enums;   
-using DomainLayer.Models;  
+using DomainLayer.Enums;
+using DomainLayer.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -243,10 +243,6 @@ namespace Persistence.Data
                     Console.WriteLine("⏭  HospitalInventories already seeded.");
                 }
 
-                
-
-                
-
                 // ═════════════════════════════════════════════════════════════
                 // 6.  DONATION SCANS  (one scan per Confirmed donation)
                 // ═════════════════════════════════════════════════════════════
@@ -356,12 +352,6 @@ namespace Persistence.Data
                     Console.WriteLine("⏭  UserRewards already seeded.");
                 }
 
-
-                // ═════════════════════════════════════════════════════════════
-                // 6b. BLOOD BAGS  (one per Confirmed donation — feeds inventory)
-                // ═════════════════════════════════════════════════════════════
-                // Blood bags are seeded from blood_bags_seed.json via BloodBagJsonSeed
-                 await BloodBagJsonSeed.SeedAsync(context);
 
                 // ═════════════════════════════════════════════════════════════
                 // 9.  INVENTORY LOGS
