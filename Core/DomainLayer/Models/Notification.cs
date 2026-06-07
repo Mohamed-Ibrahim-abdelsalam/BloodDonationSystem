@@ -24,5 +24,15 @@ namespace BloodDonationSystem.Models
         public bool IsRead { get; set; } = false;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+      
+        /// Optional: links notification to a specific entity (e.g. RequestId, DonationId).
+           
+        public int? ReferenceId { get; set; }
+    
+        /// <summary>
+        /// Optional: type of the referenced entity (e.g. "BloodRequest", "Donation", "Reward").
+       
+        [MaxLength(50)]
+        public string? ReferenceType { get; set; }
     }
 }

@@ -56,7 +56,7 @@ namespace Service
                 Role = Role.HospitalAdmin,
                 // Required fields — sensible defaults for admin-created accounts
                 Address = hospital.Address ?? string.Empty,
-                NationalId = string.Empty,
+                NationalId = null,
                 EmailConfirmed = true,
                 CreatedAt = now,
             };
@@ -137,18 +137,23 @@ namespace Service
             };
         }
 
+        
+
         // ── PUT /api/admin/hospital-admins/{id} ───────────────────────────────
         public async Task<HospitalAdminDto> UpdateAsync(string id, UpdateHospitalAdminDto dto)
         {
-            // 1. Validate admin exists
-            var spec = new HospitalAdminByIdSpecification(id);
-            var admin = await _uow.Users.GetEntityWithSpecAsync(spec)
+            // 1. Fetch admin via UserManager (identity-managed, no EF tracking conflict)
+            var admin = await _userManager.FindByIdAsync(id)
                 ?? throw new KeyNotFoundException(
                     $"Hospital Admin with id '{id}' was not found.");
 
-            // 2. Validate hospital exists
+            if (admin.Role != Role.HospitalAdmin)
+                throw new KeyNotFoundException(
+                    $"Hospital Admin with id '{id}' was not found.");
+
+            // 2. Validate hospital exists — use AsNoTracking to avoid tracking conflict
             var hospitalSpec = new HospitalByIdSpecification(dto.HospitalId);
-            var hospital = await _uow.Hospitals.GetEntityWithSpecAsync(hospitalSpec)
+            var hospital = await _uow.Hospitals.GetEntityWithSpecAsNoTrackingAsync(hospitalSpec)
                 ?? throw new KeyNotFoundException(
                     $"Hospital with id {dto.HospitalId} was not found.");
 
@@ -190,12 +195,18 @@ namespace Service
             };
         }
 
+        
         // ── DELETE /api/admin/hospital-admins/{id} ────────────────────────────
         public async Task DeleteAsync(string id)
         {
-            var spec = new HospitalAdminByIdSpecification(id);
-            var admin = await _uow.Users.GetEntityWithSpecAsync(spec)
+            // Use UserManager directly — avoids EF tracking conflicts
+            // that occur when fetching via GenericRepository then passing to Identity methods
+            var admin = await _userManager.FindByIdAsync(id)
                 ?? throw new KeyNotFoundException(
+                    $"Hospital Admin with id '{id}' was not found.");
+
+            if (admin.Role != Role.HospitalAdmin)
+                throw new KeyNotFoundException(
                     $"Hospital Admin with id '{id}' was not found.");
 
             // Remove Identity role first

@@ -87,4 +87,44 @@ namespace DomainLayer.Specifications
                 t.ExpiryDate > DateTime.UtcNow;
         }
     }
+
+
+    /// <summary>
+    /// Finds ANY Pickup QrToken linked to a BloodRequest — regardless of IsUsed or expiry.
+    /// DisableReadOnly() = tracked, because we may update it (refresh expired token).
+    /// Used instead of ActivePickupQrSpecification to handle all 5 cases:
+    ///   1. No record exists       → create new
+    ///   2. Valid (active) record  → return as-is
+    ///   3. Expired, not used      → refresh (update same row)
+    ///   4. IsUsed = true          → 400 error (never regenerate)
+    /// </summary>
+    public class AnyPickupQrByRequestSpecification : BaseSpecification<QrToken>
+    {
+        public AnyPickupQrByRequestSpecification(int bloodRequestId)
+        {
+            Criteria = q =>
+                q.BloodRequestId == bloodRequestId &&
+                q.Type == QrTokenType.Pickup;
+
+            DisableReadOnly();  // tracked — may update Token/ExpiryDate in place
+        }
+    }
+
+
+    /// <summary>
+    /// Finds ANY Pickup QrToken linked to a Donation — regardless of IsUsed or expiry.
+    /// DisableReadOnly() = tracked, because we may refresh an expired token in place.
+    /// Mirrors AnyPickupQrByRequestSpecification but for general donation withdrawals.
+    /// </summary>
+    public class AnyPickupQrByDonationSpecification : BaseSpecification<QrToken>
+    {
+        public AnyPickupQrByDonationSpecification(int donationId)
+        {
+            Criteria = q =>
+                q.DonationId == donationId &&
+                q.Type == QrTokenType.Pickup;
+
+            DisableReadOnly();  // tracked — may update Token/ExpiryDate in place
+        }
+    }
 }

@@ -19,15 +19,18 @@ namespace Service
         private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationService _notificationService;
 
         public DonationService(
             IUnitOfWork uow,
             IMapper mapper,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            INotificationService notificationService)
         {
             _uow = uow;
             _mapper = mapper;
             _userManager = userManager;
+            _notificationService = notificationService;
         }
 
         // ── POST /api/donations ───────────────────────────────────────────────
@@ -43,35 +46,41 @@ namespace Service
                 ?? throw new KeyNotFoundException(
                     $"Hospital with id {dto.HospitalId} was not found.");
 
-            // ── 3. Request-based donation extra validations ───────────────────
-            if (dto.BloodRequestId.HasValue)
-            {
-                var requestSpec = new BloodRequestByIdSpecification(dto.BloodRequestId.Value);
-                var bloodRequest = await _uow.BloodRequests.GetEntityWithSpecAsync(requestSpec)
-                    ?? throw new KeyNotFoundException(
-                        $"Blood request with id {dto.BloodRequestId.Value} was not found.");
 
-                // 400 — request must be Open
-                if (bloodRequest.Status != BloodRequestStatus.Open)
-                    throw new InvalidOperationException(
-                        "Cannot donate to a blood request that is not Open.");
 
-                // 400 — hospital selected must match the request's hospital
-                if (bloodRequest.HospitalId.HasValue &&
-                    bloodRequest.HospitalId.Value != dto.HospitalId)
-                    throw new InvalidOperationException(
-                        "The selected hospital does not match the blood request's hospital. " +
-                        $"Please select hospital id {bloodRequest.HospitalId.Value}.");
-
-                // 400 — prevent duplicate (same user + same request)
-                var duplicateSpec = new DuplicateDonationSpecification(
-                    userId, dto.BloodRequestId.Value);
-                var existing = await _uow.Donations.GetEntityWithSpecAsync(duplicateSpec);
-
-                if (existing is not null)
-                    throw new InvalidOperationException(
-                        "You have already submitted a donation for this blood request.");
-            }
+            // ── 3. Request-based donation extra validations ───────────────────\n'
+                    // bloodRequest is hoisted outside the if-block so Step 5\n'
+                // can reuse it for the notification without a second DB query.\n'
+                BloodRequest? bloodRequest = null;
+    
+                if (dto.BloodRequestId.HasValue)
+                {
+                    var requestSpec = new BloodRequestByIdSpecification(dto.BloodRequestId.Value);
+                    bloodRequest = await _uow.BloodRequests.GetEntityWithSpecAsync(requestSpec)
+                        ?? throw new KeyNotFoundException(
+                            $"Blood request with id {dto.BloodRequestId.Value} was not found.");
+    
+                    // 400 — request must be Open\n'
+                    if (bloodRequest.Status != BloodRequestStatus.Open)
+                       throw new InvalidOperationException(
+                          "Cannot donate to a blood request that is not Open.");
+    
+                    // 400 — hospital selected must match the request\'s hospital
+                    if (bloodRequest.HospitalId.HasValue &&
+                        bloodRequest.HospitalId.Value != dto.HospitalId)
+                        throw new InvalidOperationException(
+                            "The selected hospital does not match the blood request\'s hospital." +
+                            $"Please select hospital id {bloodRequest.HospitalId.Value}.");
+    
+                    // 400 — prevent duplicate (same user + same request)\n'
+                    var duplicateSpec = new DuplicateDonationSpecification(
+                        userId, dto.BloodRequestId.Value);
+                    var existing = await _uow.Donations.GetEntityWithSpecAsync(duplicateSpec);
+    
+                    if (existing is not null)
+                        throw new InvalidOperationException(
+                            "You have already submitted a donation for this blood request.");
+                }
 
             // ── 4. Build the Donation entity ──────────────────────────────────
             // BloodType comes from the authenticated user — never from the request body.
@@ -96,9 +105,29 @@ namespace Service
             await _uow.Donations.AddAsync(donation);
             await _uow.SaveChangesAsync();
 
-            // ── 5. Reload with navigation properties for full response ─────────
-            var spec = new DonationByIdSpecification(donation.Id);
-            var created = await _uow.Donations.GetEntityWithSpecAsync(spec);
+            // ── 5. Notify the request owner (request-linked donations only) ────\n'
+           // Reuse bloodRequest already loaded in Step 3 — no extra DB query.\n'
+           // General donations (BloodRequestId == null) skip this block.\n'
+                if (bloodRequest is not null)
+                {
+                    try
+                    {
+                        await _notificationService.SendAsync(
+                            receiverUserId: bloodRequest.RequestedByUserId,
+                            title:          "Donation Received",
+                            message:        "A donor has volunteered to donate blood for your request.",
+                            referenceId:    bloodRequest.Id,
+                            referenceType:  "BloodRequest");
+                    }
+                    catch
+                    {
+                        // Notification failure is non-critical — donation flow continues\n'
+                    }
+                }
+
+            // ── 6. Reload with navigation properties for full response ─────────\n'
+               var reloadSpec = new DonationByIdSpecification(donation.Id);
+              var created    = await _uow.Donations.GetEntityWithSpecAsync(reloadSpec);
 
             var result = _mapper.Map<DonationResponseDto>(created!);
             result.Message = "Donation created successfully";

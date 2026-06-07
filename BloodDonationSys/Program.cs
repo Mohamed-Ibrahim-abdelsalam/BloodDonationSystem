@@ -85,12 +85,19 @@ public class Program
         builder.Services.AddScoped<IHospitalAdminService, HospitalAdminService>();
         builder.Services.AddScoped<IRewardAdminService, RewardAdminService>();
         builder.Services.AddScoped<IHospitalInventoryService, HospitalInventoryService>();
+        builder.Services.AddScoped<IBloodUsageService, BloodUsageService>();
         builder.Services.AddScoped<IAiMatchService, AiMatchService>();
         builder.Services.AddHttpClient<AiMatchService>(client =>
          {
               client.BaseAddress = new Uri("https://blood-matching-ai-production.up.railway.app/");
               client.Timeout = TimeSpan.FromSeconds(35);
          });
+        builder.Services.AddScoped<IBloodPredictionService, BloodPredictionService>();
+        builder.Services.AddHttpClient<BloodPredictionService>(client =>
+        {
+              client.BaseAddress = new Uri("https://blood-prediction-service-production.up.railway.app/");
+               client.Timeout     = TimeSpan.FromSeconds(30);
+        });
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // AutoMapper
@@ -137,7 +144,9 @@ public class Program
             options.AddPolicy("AllowLocalDev", policy =>
             {
                 policy
-                    .WithOrigins("http://localhost:4200")
+                    .WithOrigins("http://localhost:4200" ,
+                    "https://blood-donation-dashboard-three.vercel.app"
+                    )
                     .AllowAnyHeader()
                     .AllowAnyMethod();
             });

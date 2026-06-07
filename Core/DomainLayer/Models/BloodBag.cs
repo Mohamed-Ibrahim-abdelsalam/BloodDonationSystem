@@ -11,35 +11,31 @@ using System.Threading.Tasks;
 
 namespace DomainLayer.Models
 {
-    /// <summary>
-    /// Represents a single physical blood bag created automatically
-    /// when a donation QR is successfully scanned and confirmed.
-    /// Each donation creates exactly one BloodBag.
-    /// </summary>
     public class BloodBag
     {
         [Key]
         public int Id { get; set; }
 
-        /// <summary>The confirmed donation that produced this blood bag.</summary>
+    
         [Required]
         public int DonationId { get; set; }
 
         [ForeignKey(nameof(DonationId))]
         public Donation Donation { get; set; } = null!;
 
-        /// <summary>Hospital where the bag is stored.</summary>
         [Required]
         public int HospitalId { get; set; }
 
         [ForeignKey(nameof(HospitalId))]
         public Hospital Hospital { get; set; } = null!;
 
-        /// <summary>Blood type inherited from the donation at creation time.</summary>
+     
         [Required]
         public BloodType BloodType { get; set; }
 
         public BloodBagStatus Status { get; set; } = BloodBagStatus.Available;
+
+        public DateTime? WithdrawnAt { get; set; }
 
         /// <summary>
         /// Timestamp of the successful donation QR scan — when the bag entered inventory.

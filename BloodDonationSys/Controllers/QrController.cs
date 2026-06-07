@@ -80,6 +80,14 @@ namespace BloodDonationSystem.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    Message = ex.Message,
+                    InnerException = ex.InnerException?.Message
+                });
+            }
         }
 
    
@@ -156,6 +164,14 @@ namespace BloodDonationSystem.Controllers
                {
                   return BadRequest(new { message = ex.Message });
                }
+              catch (Exception ex)
+              {
+                   return StatusCode(500, new
+                  {
+                    Message = ex.Message,
+                    InnerException = ex.InnerException?.Message
+                  });
+              }
         }
 
 

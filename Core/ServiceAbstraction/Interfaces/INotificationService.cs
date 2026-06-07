@@ -11,5 +11,17 @@ namespace ServiceAbstraction.Interfaces
     {
         Task<IEnumerable<NotificationDto>> GetMyNotificationsAsync(string userId);
         Task MarkAsReadAsync(int notificationId, string userId);
+
+         /// <summary>
+        /// Creates and persists a notification for a specific user.
+        /// Used internally by other services — never called from controllers directly.
+        
+           Task SendAsync(
+                string receiverUserId,
+                string title,
+                string message,
+                int?   referenceId   = null,
+                string? referenceType = null);
     }
+    
 }

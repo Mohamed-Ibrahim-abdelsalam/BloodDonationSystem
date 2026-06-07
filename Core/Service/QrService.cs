@@ -19,13 +19,14 @@ namespace Service
     {
         private readonly IUnitOfWork _uow;
         private readonly UserManager<ApplicationUser> _userManager;
-
+        private readonly INotificationService _notificationService;
         private const int QrExpiryMinutes = 15;
 
-        public QrService(IUnitOfWork uow, UserManager<ApplicationUser> userManager)
+        public QrService(IUnitOfWork uow, UserManager<ApplicationUser> userManager, INotificationService notificationService)
         {
             _uow = uow;
             _userManager = userManager;
+            _notificationService = notificationService;
         }
 
         // ── GET /api/donations/{id}/qr ────────────────────────────────────────
@@ -76,40 +77,63 @@ namespace Service
         // ── GET /api/requests/{id}/pickup-qr ─────────────────────────────────
         public async Task<QrTokenResponseDto> GeneratePickupQrAsync(int requestId, string userId)
         {
-            var requestSpec = new BloodRequestByIdSpecification(requestId);
-            var bloodRequest = await _uow.BloodRequests.GetEntityWithSpecAsync(requestSpec);
-
-            // 404
-            if (bloodRequest is null)
-                throw new KeyNotFoundException($"Blood request with id {requestId} was not found.");
-
-            // 400 — request must be Fulfilled (donation confirmed) to generate pickup QR
-            if (bloodRequest.Status != BloodRequestStatus.Fulfilled)
-                throw new InvalidOperationException(
-                    "Pickup QR can only be generated for fulfilled requests (after donation is confirmed).");
-
-            // If an active token already exists, return it
-            var existingSpec = new ActivePickupQrSpecification(requestId);
-            var existingToken = await _uow.QrTokens.GetEntityWithSpecAsync(existingSpec);
-            if (existingToken is not null)
-            {
-                return MapToQrResponse(existingToken, requestId);
-            }
-
-            var qrToken = new QrToken
-            {
-                Token = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N"),
-                Type = QrTokenType.Pickup,
-                BloodRequestId = requestId,
-                ExpiryDate = DateTime.UtcNow.AddMinutes(QrExpiryMinutes),
-                IsUsed = false,
-                CreatedAt = DateTime.UtcNow,
-            };
-
-            await _uow.QrTokens.AddAsync(qrToken);
-            await _uow.SaveChangesAsync();
-
-            return MapToQrResponse(qrToken, requestId);
+               // ── Validate blood request ────────────────────────────────────\n'
+                var requestSpec  = new BloodRequestByIdSpecification(requestId);
+                var bloodRequest = await _uow.BloodRequests.GetEntityWithSpecAsync(requestSpec)
+                    ?? throw new KeyNotFoundException(
+                        $"Blood request with id {requestId} was not found.");
+    
+    
+    
+                // 400 — request must be Fulfilled before pickup QR can be generated\n'
+                if (bloodRequest.Status != BloodRequestStatus.Fulfilled)
+                    throw new InvalidOperationException(
+                        "Pickup QR can only be generated for fulfilled requests (after donation is confirmed).");
+    
+                // ── Look up ANY existing Pickup QR for this request (tracked) ─
+                // We intentionally ignore IsUsed / expiry here so we can
+                // handle all 4 cases without hitting the unique-index constraint.
+                var anySpec    = new AnyPickupQrByRequestSpecification(requestId);
+                var existing   = await _uow.QrTokens.GetEntityWithSpecAsync(anySpec);
+    
+                // ── CASE 1: No record exists at all → create new ──────────────\n'
+                if (existing is null)
+                {
+                    var newToken = new QrToken
+                    {
+                        Token          = GenerateToken(),
+                        Type           = QrTokenType.Pickup,
+                        BloodRequestId = requestId,
+                        ExpiryDate     = DateTime.UtcNow.AddMinutes(QrExpiryMinutes),
+                        IsUsed         = false,
+                        CreatedAt      = DateTime.UtcNow,
+                    };
+                    await _uow.QrTokens.AddAsync(newToken);
+                   await _uow.SaveChangesAsync();
+                    return MapToQrResponse(newToken, requestId);
+                }
+    
+                // ── CASE 2: Already scanned (IsUsed) → hard block ─────────────\n'
+                // A pickup QR that has been used means the blood was already\n'
+                // received. We must never regenerate it.\n'
+                if (existing.IsUsed)
+                    throw new InvalidOperationException(
+                        "Pickup QR has already been used and cannot be regenerated. " +
+                        "The blood pickup was already confirmed for this request.");
+    
+                // ── CASE 3: Exists, not used, still valid → return as-is ──────\n'
+                if (existing.ExpiryDate > DateTime.UtcNow)
+                    return MapToQrResponse(existing, requestId);
+    
+                // ── CASE 4: Exists, not used, but expired → refresh same row ──\n'
+                // We update the existing row instead of inserting a new one,\n'
+                // which preserves the unique index on BloodRequestId.\n'
+                existing.Token      = GenerateToken();
+                existing.ExpiryDate = DateTime.UtcNow.AddMinutes(QrExpiryMinutes);
+                existing.IsUsed     = false;
+                _uow.QrTokens.Update(existing);
+                await _uow.SaveChangesAsync();
+               return MapToQrResponse(existing, requestId);
         }
 
 
@@ -149,27 +173,46 @@ namespace Service
                 throw new UnauthorizedAccessException(
                     "This donation does not belong to your hospital.");
 
-            // Return existing active token if available
-            var existingSpec = new ActiveDonationPickupQrSpecification(donationId);
-            var existingToken = await _uow.QrTokens.GetEntityWithSpecAsync(existingSpec);
-            if (existingToken is not null)
-                return MapToQrResponse(existingToken, donationId);
+            // ── Look up ANY existing Pickup QR for this donation (tracked) ─
+                var anySpec  = new AnyPickupQrByDonationSpecification(donationId);
+                var existing = await _uow.QrTokens.GetEntityWithSpecAsync(anySpec);
+    
+                // ── CASE 1: No record exists → create new ─────────────────────
+                if (existing is null)
+                {
+                    var newToken = new QrToken
+                    {
+                        Token          = GenerateToken(),
+                        Type           = QrTokenType.Pickup,
+                        DonationId     = donationId,
+                        BloodRequestId = null,
+                        ExpiryDate     = DateTime.UtcNow.AddMinutes(QrExpiryMinutes),
+                        IsUsed         = false,
+                        CreatedAt      = DateTime.UtcNow,
+                    };
+                    await _uow.QrTokens.AddAsync(newToken);
+                    await _uow.SaveChangesAsync();
+                    return MapToQrResponse(newToken, donationId);
+                }
+    
+                // ── CASE 2: Already scanned → hard block ──────────────────────\n'
+                if (existing.IsUsed)
+                    throw new InvalidOperationException(
+                        "Withdrawal QR has already been used and cannot be regenerated. " +
+                        "This blood bag was already withdrawn from inventory.");
+    
+                // ── CASE 3: Exists, not used, still valid → return as-is ──────\n'
+                if (existing.ExpiryDate > DateTime.UtcNow)
+                    return MapToQrResponse(existing, donationId);
+    
+                // ── CASE 4: Exists, not used, expired → refresh same row ──────\n'
+                existing.Token      = GenerateToken();
+                existing.ExpiryDate = DateTime.UtcNow.AddMinutes(QrExpiryMinutes);
+                existing.IsUsed     = false;
+                _uow.QrTokens.Update(existing);
+                await _uow.SaveChangesAsync();
 
-            var qrToken = new QrToken
-            {
-                Token = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N"),
-                Type = QrTokenType.Pickup,
-                DonationId = donationId,      // linked to donation, NOT a BloodRequest
-                BloodRequestId = null,
-                ExpiryDate = DateTime.UtcNow.AddMinutes(QrExpiryMinutes),
-                IsUsed = false,
-                CreatedAt = DateTime.UtcNow,
-            };
-
-            await _uow.QrTokens.AddAsync(qrToken);
-            await _uow.SaveChangesAsync();
-
-            return MapToQrResponse(qrToken, donationId);
+            return MapToQrResponse(existing, donationId);
         }
 
 
@@ -251,6 +294,21 @@ namespace Service
                     {
                         bloodRequest.Status = BloodRequestStatus.Fulfilled;
                         _uow.BloodRequests.Update(bloodRequest);
+                        // Notify the request owner — blood is ready for pickup
+                        try
+                        {
+                            await _notificationService.SendAsync(
+                                receiverUserId: bloodRequest.RequestedByUserId,
+                                title: "Blood Ready For Pickup",
+                                message: "Your blood request has been fulfilled. You can now generate a pickup QR.",
+                                referenceId: bloodRequest.Id,
+                                referenceType: "BloodRequest");
+                        }
+                        catch
+                        {
+                            // Notification failure must not break the scan flow
+
+                        }
                     }
                 }
             }
@@ -385,6 +443,7 @@ namespace Service
                 if (bloodBag is not null)
                 {
                     bloodBag.Status = BloodBagStatus.Withdrawn;
+                    bloodBag.WithdrawnAt = DateTime.UtcNow;
                     _uow.BloodBags.Update(bloodBag);
                 }
 
@@ -509,6 +568,10 @@ namespace Service
                     ReferenceId = userRewardId,
                     ExpiresAt   = token.ExpiryDate,
             };
+
+        private static string GenerateToken()
+               => Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
+
         private static QrTokenResponseDto MapToQrResponse(QrToken token, int referenceId)
             => new QrTokenResponseDto
             {

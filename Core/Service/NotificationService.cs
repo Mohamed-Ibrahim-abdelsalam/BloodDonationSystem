@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BloodDonationSystem.Models;
 using DomainLayer.Interfaces;
 using DomainLayer.Specifications;
 using ServiceAbstraction.Dtos;
@@ -50,5 +51,30 @@ namespace Service
             _uow.Notifications.Update(notification);
             await _uow.SaveChangesAsync();
         }
+
+
+        // ── Internal: send notification ───────────────────────────────────\n'
+           public async Task SendAsync(
+                string receiverUserId,
+                string title,
+                string message,
+                int?    referenceId   = null,
+                string? referenceType = null)
+            {
+                var notification = new Notification
+                {
+                    UserId        = receiverUserId,
+                    Title         = title,
+                    Message       = message,
+                    IsRead        = false,
+                    CreatedAt     = DateTime.UtcNow,
+                    ReferenceId   = referenceId,
+                    ReferenceType = referenceType,
+                };
+    
+                await _uow.Notifications.AddAsync(notification);
+                await _uow.SaveChangesAsync();
+            }
+        
     }
 }

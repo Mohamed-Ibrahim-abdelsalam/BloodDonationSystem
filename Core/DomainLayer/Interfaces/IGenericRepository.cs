@@ -11,6 +11,7 @@ namespace DomainLayer.Interfaces
     {
         Task<T?> GetByIdAsync(int id);
         Task<T?> GetEntityWithSpecAsync(ISpecification<T> spec);
+        Task<T?> GetEntityWithSpecAsNoTrackingAsync(ISpecification<T> spec);
         Task<IEnumerable<T>> GetAllWithSpecAsync(ISpecification<T> spec);
         Task<IEnumerable<T>> GetAllAsync();
 

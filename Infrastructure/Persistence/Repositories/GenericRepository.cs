@@ -28,6 +28,11 @@ namespace Persistence.Repositories
                 .GetQuery(_ctx.Set<T>().AsQueryable(), spec)
                 .FirstOrDefaultAsync();
 
+        public async Task<T?> GetEntityWithSpecAsNoTrackingAsync(ISpecification<T> spec)
+            => await SpecificationEvaluator<T>
+                .GetQuery(_ctx.Set<T>().AsNoTracking(), spec)
+                .FirstOrDefaultAsync();
+
         public async Task<IEnumerable<T>> GetAllWithSpecAsync(ISpecification<T> spec)
             => await SpecificationEvaluator<T>
                 .GetQuery(_ctx.Set<T>().AsQueryable(), spec)

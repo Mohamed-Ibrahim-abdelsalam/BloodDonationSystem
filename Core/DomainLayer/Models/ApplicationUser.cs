@@ -14,16 +14,13 @@ namespace BloodDonationSystem.Models
         [MaxLength(100)]
         public string FullName { get; set; } = string.Empty;
 
-  
-
         public BloodType BloodType { get; set; }
-
 
         public Gender Gender { get; set; }
 
         public int Age { get; set; }
 
-        public string NationalId { get; set; } = string.Empty;
+        public string? NationalId { get; set; } 
 
         [Required]
         [MaxLength(300)]
