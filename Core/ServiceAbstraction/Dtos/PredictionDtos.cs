@@ -49,6 +49,9 @@ namespace ServiceAbstraction.Dtos
 
         [JsonPropertyName("expiry_date")]
         public DateTime? ExpiryDate { get; set; }
+
+        [JsonPropertyName("withdrawn_at")]
+        public DateTime? WithdrawnAt { get; set; }
     }
 
     // ══════════════════════════════════════════════════════════════════════════

@@ -16,7 +16,7 @@ namespace ServiceAbstraction.Mapping
             // ── Donation → DonationResponseDto (POST response) ────────────────
             CreateMap<Donation, DonationResponseDto>()
                 .ForMember(d => d.BloodType,
-                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "+")))
+                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "")))
                 .ForMember(d => d.Status,
                     o => o.MapFrom(s => s.Status.ToString()))
                 .ForMember(d => d.HospitalId,
@@ -39,7 +39,7 @@ namespace ServiceAbstraction.Mapping
             // ── Donation → MyDonationDto (GET /my list) ───────────────────────
             CreateMap<Donation, MyDonationDto>()
                 .ForMember(d => d.BloodType,
-                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "+")))
+                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "")))
                 .ForMember(d => d.Status,
                     o => o.MapFrom(s => s.Status.ToString()))
                 .ForMember(d => d.HospitalId,

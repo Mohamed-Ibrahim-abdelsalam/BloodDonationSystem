@@ -69,12 +69,13 @@ namespace Service
                 HospitalId = admin.HospitalId.Value,
                 HorizonDays = horizonDays,
                 BloodBags = bags.Select(b => new BloodBagPayloadDto
-                {
-                    BloodType = (int)b.BloodType,          // enum int value (1–8)
-                    Status = MapBagStatusToInt(b.Status), // Available=0, Withdrawn=1
-                    CreatedAt = b.CreatedAt,
-                    ExpiryDate = b.ExpiryDate,
-                }).ToList(),
+                   {
+                        BloodType   = (int)b.BloodType,            // enum int value (1–8)
+                        Status      = MapBagStatusToInt(b.Status), // Available=0, Withdrawn=1
+                        CreatedAt   = b.CreatedAt,
+                        ExpiryDate  = b.ExpiryDate,
+                        WithdrawnAt = b.WithdrawnAt,              // null for Available bags
+                    }).ToList(),
             };
 
             // ── 6. Call Python prediction service ─────────────────────────────

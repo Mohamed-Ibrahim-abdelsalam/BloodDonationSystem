@@ -21,7 +21,7 @@ namespace ServiceAbstraction.Mapping
             // ── BloodRequest → BloodRequestDto (POST response + GET list) ─────
             CreateMap<BloodRequest, BloodRequestDto>()
                 .ForMember(d => d.BloodType,
-                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "+")))
+                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "")))
                 .ForMember(d => d.Priority,
                     o => o.MapFrom(s => s.Priority.ToString()))
                 .ForMember(d => d.Status,
@@ -34,7 +34,7 @@ namespace ServiceAbstraction.Mapping
             // ── BloodRequest → BloodRequestDetailDto (GET by id) ──────────────
             CreateMap<BloodRequest, BloodRequestDetailDto>()
                 .ForMember(d => d.BloodType,
-                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "+")))
+                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "")))
                 .ForMember(d => d.Priority,
                     o => o.MapFrom(s => s.Priority.ToString()))
                 .ForMember(d => d.Status,
@@ -51,7 +51,7 @@ namespace ServiceAbstraction.Mapping
             // ── BloodRequest → MyBloodRequestDto (GET /my) ────────────────────
             CreateMap<BloodRequest, MyBloodRequestDto>()
                 .ForMember(d => d.BloodType,
-                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "+")))
+                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "")))
                 .ForMember(d => d.Priority,
                     o => o.MapFrom(s => s.Priority.ToString()))
                 .ForMember(d => d.Status,

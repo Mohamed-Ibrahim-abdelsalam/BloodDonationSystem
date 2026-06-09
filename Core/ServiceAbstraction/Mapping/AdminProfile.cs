@@ -22,7 +22,7 @@ namespace ServiceAbstraction.Mapping
                         ? s.RequestedByUser.FullName
                         : string.Empty))
                 .ForMember(d => d.BloodType,
-                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "+")))
+                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "")))
                 .ForMember(d => d.Priority,
                     o => o.MapFrom(s => s.Priority.ToString()))
                 .ForMember(d => d.Status,
@@ -37,7 +37,7 @@ namespace ServiceAbstraction.Mapping
                         ? s.DonorUser.FullName
                         : string.Empty))
                 .ForMember(d => d.BloodType,
-                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "+")))
+                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "")))
                 .ForMember(d => d.Status,
                     o => o.MapFrom(s => s.Status.ToString()))
                 .ForMember(d => d.Quantity,
@@ -51,7 +51,7 @@ namespace ServiceAbstraction.Mapping
             // AutoMapper handles the flat fields; service handles computed ones.
             CreateMap<ApplicationUser, AdminUserListItemDto>()
                 .ForMember(d => d.BloodType,
-                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "+")))
+                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "")))
                 .ForMember(d => d.LastDonation,
                     o => o.Ignore())   // computed from Donations collection in service
                 .ForMember(d => d.Status,
@@ -60,7 +60,7 @@ namespace ServiceAbstraction.Mapping
             // ── ApplicationUser → AdminUserDetailDto ──────────────────────────
             CreateMap<ApplicationUser, AdminUserDetailDto>()
                 .ForMember(d => d.BloodType,
-                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "+")))
+                    o => o.MapFrom(s => s.BloodType.ToString().Replace("_", "")))
                 .ForMember(d => d.Gender,
                     o => o.MapFrom(s => s.Gender.ToString()))
                 .ForMember(d => d.Role,
