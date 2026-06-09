@@ -96,10 +96,10 @@ namespace ServiceAbstraction.Dtos
         public List<double> PredictedPerDay { get; set; } = new();
 
         [JsonPropertyName("accuracy_percent")]
-        public double AccuracyPercent { get; set; }
+        public double? AccuracyPercent { get; set; }
 
         [JsonPropertyName("current_stock")]
-        public int CurrentStock { get; set; }
+        public double? CurrentStock { get; set; }
 
         [JsonPropertyName("units_required")]
         public double UnitsRequired { get; set; }

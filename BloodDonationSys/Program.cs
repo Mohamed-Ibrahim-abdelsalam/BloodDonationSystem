@@ -92,19 +92,19 @@ public class Program
               client.BaseAddress = new Uri("https://blood-matching-ai-production.up.railway.app/");
               client.Timeout = TimeSpan.FromSeconds(35);
          });
-        builder.Services.AddScoped<IBloodPredictionService, BloodPredictionService>();
-        builder.Services.AddHttpClient<BloodPredictionService>(client =>
+
+        builder.Services.AddHttpClient<IBloodPredictionService, BloodPredictionService>(client =>
         {
-              client.BaseAddress = new Uri("https://blood-prediction-service-production.up.railway.app/");
-               client.Timeout     = TimeSpan.FromSeconds(30);
+            client.BaseAddress = new Uri("https://blood-prediction-service-production.up.railway.app/");
+            client.Timeout = TimeSpan.FromSeconds(30);
         });
-        builder.Services.AddHttpClient<ChatBotService>(client =>
+
+        builder.Services.AddHttpClient<IChatBotService, ChatBotService>(client =>
         {
             client.BaseAddress = new Uri("https://chatbot-production-f654.up.railway.app/");
             client.Timeout = TimeSpan.FromSeconds(30);
             client.DefaultRequestHeaders.Add("x-api-key", "blood-donation-secret-key-2025");
         });
-        builder.Services.AddScoped<IChatBotService, ChatBotService>();
 
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 

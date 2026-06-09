@@ -43,10 +43,13 @@ namespace Service
             var user = await _userManager.FindByIdAsync(userId)
                 ?? throw new KeyNotFoundException("User not found.");
 
-            // Count only Confirmed donations
-            var donationsSpec = new DonationsByUserSpecification(userId);
-            var donations     = await _uow.Donations.GetAllWithSpecAsync(donationsSpec);
-            var totalDonations = donations.Count(d => d.Status == DonationStatus.Confirmed);
+            // Count Confirmed + Withdrawn — Withdrawn means the blood was actually used,
+            // so it still counts as a completed donation in the user\'s history.
+                var donationsSpec  = new DonationsByUserSpecification(userId);
+                var donations      = await _uow.Donations.GetAllWithSpecAsync(donationsSpec);
+                var totalDonations = donations.Count(d =>
+                    d.Status == DonationStatus.Confirmed ||
+                    d.Status == DonationStatus.Withdrawn);
 
             return new UserDashboardDto
             {
@@ -71,6 +74,8 @@ namespace Service
             user.Age = dto.Age;
             user.Gender = dto.Gender;
             user.Address = dto.Address;
+            user.Latitude = dto.Latitude;
+            user.Longitude = dto.Longitude;
 
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)

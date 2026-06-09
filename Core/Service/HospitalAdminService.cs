@@ -37,12 +37,20 @@ namespace Service
             var hospital = await _uow.Hospitals.GetEntityWithSpecAsync(hospitalSpec)
                 ?? throw new KeyNotFoundException(
                     $"Hospital with id {dto.HospitalId} was not found.");
-
-            // 2. Validate unique email
-            var existing = await _userManager.FindByEmailAsync(dto.Email);
-            if (existing is not null)
-                throw new InvalidOperationException(
-                    $"A user with email '{dto.Email}' already exists.");
+            
+            // 2. Validate hospital not already linked to another admin
+               var hospitalAdminSpec = new HospitalAdminByHospitalSpecification(dto.HospitalId);
+               var existingAdmin     = await _uow.Users.GetEntityWithSpecAsync(hospitalAdminSpec);
+               if (existingAdmin is not null)
+                    throw new InvalidOperationException(
+                        $"Hospital with id {dto.HospitalId} already has a Hospital Admin assigned. " +
+                        "Each hospital can only have one Hospital Admin.");
+    
+                // 3. Validate unique email\n'
+                var existing = await _userManager.FindByEmailAsync(dto.Email);
+                if (existing is not null)
+                    throw new InvalidOperationException(
+                        $"A user with email \'{dto.Email}\' already exists.");
 
             // 3. Create user via Identity
             var now = DateTime.UtcNow;
@@ -157,15 +165,27 @@ namespace Service
                 ?? throw new KeyNotFoundException(
                     $"Hospital with id {dto.HospitalId} was not found.");
 
-            // 3. Validate unique email (exclude self)
-            if (!string.Equals(admin.Email, dto.Email.Trim(),
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                var emailUser = await _userManager.FindByEmailAsync(dto.Email);
-                if (emailUser is not null)
-                    throw new InvalidOperationException(
-                        $"A user with email '{dto.Email}' already exists.");
-            }
+            // 3. Validate hospital not already linked to another admin (exclude self)\n'
+               if (admin.HospitalId != dto.HospitalId)
+               {
+                    var hospitalAdminSpec = new HospitalAdminByHospitalSpecification(
+                        dto.HospitalId, excludeUserId: id);
+                    var existingAdmin = await _uow.Users.GetEntityWithSpecAsync(hospitalAdminSpec);
+                    if (existingAdmin is not null)
+                        throw new InvalidOperationException(
+                            $"Hospital with id {dto.HospitalId} already has a Hospital Admin assigned. " +
+                            "Each hospital can only have one Hospital Admin.");
+               }
+    
+                // 4. Validate unique email (exclude self)
+                if (!string.Equals(admin.Email, dto.Email.Trim(),
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    var emailUser = await _userManager.FindByEmailAsync(dto.Email);
+                    if (emailUser is not null)
+                        throw new InvalidOperationException(
+                            $"A user with email \'{dto.Email}\' already exists.");
+                }
 
             // 4. Apply changes
             admin.FullName = dto.FullName.Trim();

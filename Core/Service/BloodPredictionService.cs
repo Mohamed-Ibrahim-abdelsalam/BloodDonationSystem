@@ -96,13 +96,26 @@ namespace Service
                         $"Prediction service returned {(int)httpResponse.StatusCode}: " +
                         await httpResponse.Content.ReadAsStringAsync());
 
-                var parsed = await httpResponse.Content
-                    .ReadFromJsonAsync<PredictionResponseDto>(
-                        cancellationToken: cts.Token);
+                /////////////////////////////////////////////
 
-                pythonResponse = parsed
-                    ?? throw new InvalidOperationException(
-                        "Prediction service returned an empty or unreadable response.");
+                // Read as string first then deserialize — avoids Content-Type\n'
+                // mismatch issues with ReadFromJsonAsync\n'
+                    var responseBody = await httpResponse.Content.ReadAsStringAsync(cts.Token);
+    
+                    var jsonOptions = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                    };
+  
+                   var parsed = JsonSerializer.Deserialize<PredictionResponseDto>(
+                        responseBody, jsonOptions);
+    
+                   pythonResponse = parsed
+                        ?? throw new InvalidOperationException(
+                            "Prediction service returned an empty or unreadable response.");
+
+
+                /////////////////////////////////
             }
             catch (TaskCanceledException)
             {
@@ -119,10 +132,15 @@ namespace Service
                 throw new HttpRequestException(
                     "The prediction service is currently unavailable. Please try again later.");
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
+                Console.WriteLine($"Path: {ex.Path}");
+                Console.WriteLine($"Line: {ex.LineNumber}");
+                Console.WriteLine($"BytePosition: {ex.BytePositionInLine}");
+                Console.WriteLine(ex.ToString());
+
                 throw new InvalidOperationException(
-                    "Received an invalid response from the prediction service.");
+                    "Received an invalid response from the prediction service.", ex);
             }
 
             // ── 7. Map Python response → frontend DTO ────────────────────────
@@ -137,7 +155,7 @@ namespace Service
                     new FrontendBloodTypePredictionDto
                     {
                         BloodType = p.BloodType,
-                        CurrentStock = p.CurrentStock,
+                        CurrentStock = (int)Math.Round(p.CurrentStock ?? 0),
                         RequiredUnits = p.UnitsRequired,
                         DaysOfCoverage = p.DaysOfCoverage,
                         ShortageExpected = p.ShortageExpected,

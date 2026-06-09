@@ -17,6 +17,8 @@ namespace ServiceAbstraction.Dtos
         public int Age { get; set; }
         public Gender Gender { get; set; }
         public string Address { get; set; } = string.Empty;
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
         public string NationalId { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
     }
@@ -30,6 +32,8 @@ namespace ServiceAbstraction.Dtos
         public int Age { get; set; }
         public Gender Gender { get; set; }
         public string Address { get; set; } = string.Empty;
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
         public string NationalId { get; set; } = string.Empty;
         public DateTime UpdatedAt { get; set; }
         public string Message { get; set; } = string.Empty;
@@ -57,6 +61,8 @@ namespace ServiceAbstraction.Dtos
         [Required]
         [MaxLength(300)]
         public string Address { get; set; } = string.Empty;
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
     }
 
 

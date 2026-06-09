@@ -139,4 +139,21 @@ namespace DomainLayer.Specifications
             AddInclude(u => u.Hospital);
         }
     }
+
+
+    /// <summary>
+    /// Checks if a hospital already has a HospitalAdmin linked to it.
+    /// Used to enforce one-admin-per-hospital rule.
+    /// excludeUserId allows skipping the current admin during update.
+    /// </summary>
+    public class HospitalAdminByHospitalSpecification : BaseSpecification<ApplicationUser>
+    {
+        public HospitalAdminByHospitalSpecification(int hospitalId, string? excludeUserId = null)
+        {
+            Criteria = u =>
+                u.HospitalId == hospitalId &&
+                u.Role == BloodDonationSystem.Enums.Role.HospitalAdmin &&
+                (excludeUserId == null || u.Id != excludeUserId);
+        }
+    }
 }

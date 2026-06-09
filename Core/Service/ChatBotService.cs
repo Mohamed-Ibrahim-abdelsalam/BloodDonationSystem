@@ -82,9 +82,21 @@ namespace Service
             try
             {
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-
-                var httpResponse = await _httpClient.PostAsJsonAsync(
-                    ChatBotEndpoint, chatBotRequest, cts.Token);
+               
+                // Build request manually to ensure x-api-key header is always sent\n'
+                  var requestJson    = JsonSerializer.Serialize(chatBotRequest);
+                  var requestContent = new StringContent(
+                        requestJson,
+                        System.Text.Encoding.UTF8,
+                        "application/json");
+    
+                   using var httpRequest = new HttpRequestMessage(
+                        HttpMethod.Post, ChatBotEndpoint);
+                    httpRequest.Content = requestContent;
+                    httpRequest.Headers.Add("x-api-key", "blood-donation-secret-key-2025");
+    
+                  var httpResponse = await _httpClient.SendAsync(
+                        httpRequest, cts.Token);
 
                 if (!httpResponse.IsSuccessStatusCode)
                 {
